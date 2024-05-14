@@ -27,9 +27,9 @@ void * handleconn(void *comminfo){
     // fd_set read_fds;
     // FD_ZERO(&read_fds);
     // FD_SET(newfd, &read_fds);
-
-    // inituser();
-    // startuser();
+    
+    inituser();
+    startuser();
     while(1){
         // printf("calling select\n");
         // int ret = select(newfd+1, &read_fds, NULL, NULL, NULL);
@@ -136,13 +136,30 @@ int main(){
             printf("connection failed\n");
         }
         else{
+            if(fork() == 0){//child
+                comminfo1 = malloc(sizeof(struct comminfo));
+                comminfo1->newfd = newfd;
+                pthread_create(&comminfo1->tid, NULL, handleconn, comminfo1);
+            }
+            else {
+                continue;
+            }
             
-            comminfo1 = malloc(sizeof(struct comminfo));
-            comminfo1->newfd = newfd;
-            pthread_create(&comminfo1->tid, NULL, handleconn, comminfo1);
         }
     }
 
     
     return 0;
 }
+
+
+
+// int ret = open(usrfile, O_CREAT|O_WRONLY, 0777);
+//     if(ret != -1){
+//         printf("what is going on?\n");
+//         getchar();
+//     }
+//     else{
+//         printf("nothing is wrong I'm left\n");
+//         getchar();
+//     }
