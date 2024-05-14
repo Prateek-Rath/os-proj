@@ -1,0 +1,62 @@
+entities needed:
+user data
+book data
+admin data
+
+
+user:
+id primary key
+username // must be unique
+name
+password
+phone
+
+admin:
+id primary key
+username // must be unique
+name
+password
+phone number
+
+
+book:
+title
+author
+copies left
+owner -- userid or -1(if it is in library)
+
+
+if someone buys the book, remove it from the library
+
+
+relationships:
+borrows // M:N
+
+locks and semaphores and stuff:
+when someone is borrowing/returning, no one else can edit books or do any such thing
+when someone is editing books no one else can do anything else
+so we have only exclusive locks
+
+sockets are needed to access the server functionality. the server holds all the databases and only way to access that should be through server.c
+whatever client wants is sent to server, server processes and then replies and then waits for input from client...
+
+
+login and register functionality needs to be there
+
+
+
+
+
+
+
+
+
+//todo: 
+
+//communication protocols
+
+//generic.c --later
+
+
+//implement commands and make server send back stuff
+
