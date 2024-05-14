@@ -1,3 +1,16 @@
+#ifndef GENERIC
+#define GENERIC
+
+#include<semaphore.h>
+#include<fcntl.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#include<stdio.h>
+#include"user.h"
+#include"book.h"
+#include"borrow.h"
+#include"admin.h"
+
 #define DUPLICATE_USER 2
 #define USER_NOT_FOUND 2
 
@@ -8,20 +21,24 @@ enum types {
 } type1;
 
 
+struct semaphores{
+    sem_t semusr;
+    sem_t semadm;
+    sem_t sembk;
+    sem_t semborr;
+}sems;
 
-struct userglobals{
-    int cur_usr_id;
-    int count;
-    int fd;
-} userglob;
+void initSemaphores();
+
+void initentity(enum types type);
+
+void startentity(enum types type);
+
+void createentity(enum types type);
 
 
 
-struct user{
-    int id; //primary key //the id is something that I decide // and I auto increment it....
-    char username[20]; // must be unique
-    char first_name[30];
-    char last_name[30];
-    char password[40];
-    char phone[20];//check if it is 10 digits if possible
-};
+
+
+
+#endif

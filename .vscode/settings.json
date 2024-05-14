@@ -1,6 +1,10 @@
 {
     "C_Cpp.default.compilerPath": "/usr/bin/gcc-11",
     "files.associations": {
-        "book.h": "c"
+        "book.h": "c",
+        "communication.h": "c",
+        "all.h": "c",
+        "user.h": "c",
+        "admin.h": "c"
     }
 }

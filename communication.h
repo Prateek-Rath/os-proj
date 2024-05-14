@@ -1,13 +1,17 @@
 #ifndef COMMUNICATION
 #define COMMUNICATION
-
-#include"./entities/book.h"
+#ifndef ALL
+#define ALL
+// #include"./entities/all.h"
 #include"./entities/user.h"
 #include"./entities/admin.h"
+#include"./entities/book.h"
 #include"./entities/borrow.h"
+#endif
+
 #include<pthread.h>
 
-#define PORT 5544
+#define PORT 5545
 
 
 
@@ -24,7 +28,6 @@ enum states
     admin_logged_in
 };
 
-
 struct state{
     enum states val;//the current state
     // I also might want to know who is logged in
@@ -32,13 +35,18 @@ struct state{
         struct user user;
         struct admin admin;
     }who;
-}state;
+};
+
+extern struct state state;
+
+
+void structstatecpy(struct state* s1, struct state* s2);
 
 
 
-void structstatecpy(struct state s1, struct state s2){
-    s1.val = s2.val;
-    structusercpy(s1.who.user, s2.who.user);
+void structstatecpy(struct state* s1, struct state* s2){
+    s1->val = s2->val;
+    structusercpy(&s1->who.user, &s2->who.user);
 }
 
 struct comminfo{//communication info
