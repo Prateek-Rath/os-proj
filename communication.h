@@ -77,6 +77,7 @@ enum operation{
     deleteuser,
     listusers,
     listadmins,
+    donothing
 };
 
 union uni{

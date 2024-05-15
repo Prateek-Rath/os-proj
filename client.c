@@ -33,7 +33,7 @@ struct state state;
 
 void showopts(){
     // system("/usr/bin/clear");
-    printf("1 to login as user\n2 to register a user\n3 to login as admin\n4 to register an admin\n");
+    printf("1 to login as user\n2 to register a user\n3 to login as admin\n4 to register an admin\n any other number to terminate\n");
 }
 
 void showUserMenu(){
@@ -84,6 +84,16 @@ bool contexec(){//continue execution
     }
 }
 
+int sockfd = -1;
+
+void dostuff(struct message request){
+    request.operation = donothing;
+    request.state.val = 
+    write(sockfd, &request, sizeof(struct message));
+    if(sockfd != -1)
+    close(sockfd);
+}
+
 int main(){
     //initialize state and stuff
     state.val = start;
@@ -92,7 +102,7 @@ int main(){
     
 
     int opt;
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in servaddr, client;
     servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
     // servaddr.sin_addr.s_addr = INADDR_ANY;
@@ -104,6 +114,9 @@ int main(){
         printf("connect failed!\n");
         exit(0);
     }
+    struct message request;
+    struct reply response;
+    request.operation = donothing;
     printf("WELCOME TO OUR LIBRARY MANAGEMENT SYSTEM\n");
     while(1){
         if(state.val == start){
@@ -132,6 +145,11 @@ int main(){
                 state.val = admin_register_process;
                 continue;
             }
+            else{
+                printf("exiting application.....................................................................\n");
+                dostuff(request);
+                break;
+            }
         }
         else if(state.val == user_login_process){
             // enum states newstate = loginUser();
@@ -148,8 +166,7 @@ int main(){
             printf("Enter password: ");
             scanf("%s", password);
             printf("here1\n");
-            struct message request;
-            struct reply response;
+            
             request.operation = loginuser;//what we want to do
             // request.state = state;
             request.state.who.user = state.who.user;
@@ -455,6 +472,7 @@ int main(){
                     read(sockfd, &response, sizeof(struct reply));
                     printf("server sent: \n");
                     printf("%s", response.text);
+                    break;
                 
                 case 10:
                     printf("logging out\n");

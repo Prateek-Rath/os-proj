@@ -235,18 +235,20 @@ struct user * finduser(char * username, int * offset){
 
 char * listUsers(){
     char * ans;
-    ans = malloc(10000 * sizeof(char));
+    ans = malloc(100 * sizeof(struct user));
     flock(userglob.fd, LOCK_SH);
     lseek(userglob.fd, 0, SEEK_SET);
     read(userglob.fd, &userglob.cur_usr_id, sizeof(int));
     read(userglob.fd, &userglob.count, sizeof(int));
     strcpy(ans, "");
+    printf("userglob.count in %d\n", userglob.count);
     for(int i=0; i<userglob.count; i++){
         char * ans1 = malloc(200);
         struct user temp;
         read(userglob.fd, &temp, sizeof(int));
         sprintf(ans1, "username: %s, phone: %s, first_name: %s, last_name: %s\n", temp.username, temp.phone, temp.first_name, temp.last_name);
         strcat(ans, ans1);
+        free(ans1);
     }
     flock(userglob.fd, LOCK_UN);
     return ans;

@@ -37,11 +37,13 @@ void * handleconn(void *comminfo){
         // int ret = select(newfd+1, &read_fds, NULL, NULL, NULL);
         // printf("select returned %d", ret);
         read(newfd, &buf, sizeof(struct message));
-        printf("received from client:  \n");
-        printf("client is in state: %d\n", buf.state.val);
 
         int optodo = buf.operation;
         switch(optodo){
+            case donothing:
+                // printf("op to do is nothing\n");
+                pthread_exit(NULL);
+                break;
             case findbook:
                 struct reply reply;
                 int offset;
@@ -58,7 +60,7 @@ void * handleconn(void *comminfo){
             case listbooks:
                 // reply;
                 printf("get all books will be called\n");
-                char * x;
+                char * x = getallBooks();
                 strcpy(reply.text, x);
                 printf("get all books done\n");
                 structstatecpy(&reply.newstate, &buf.state);
