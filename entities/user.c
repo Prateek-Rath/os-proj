@@ -42,7 +42,7 @@ bool userequals(struct user u1, struct user u2){
 }
 
 void inituser(){ //to be called only once
-    userglob.fd  = open(usrfile, O_CREAT|O_WRONLY, 0777);
+    userglob.fd  = open(usrfile, O_CREAT|O_WRONLY|O_TRUNC, 0777);
     if(userglob.fd == -1){
         printf("open failed\n");
         printf("errno is %d\n", errno);

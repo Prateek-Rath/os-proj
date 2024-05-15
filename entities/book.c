@@ -23,7 +23,7 @@ bool bookequals(struct book u1, struct book u2){
 }
 
 void initbook(){ //to be called only once
-    bookglob.fd  = open(bkfile, O_CREAT|O_WRONLY, 0777);
+    bookglob.fd  = open(bkfile, O_CREAT|O_WRONLY|O_TRUNC, 0777);
     if(bookglob.fd == -1){
         printf("open failed\n");
         exit(0);
@@ -130,6 +130,7 @@ void createBook(struct book u1, int *status){
 
 
 struct book * findBook(char * title, int * offset){
+    printf("find book called\n---------------");
     flock(bookglob.fd, LOCK_SH); printf("share locked bookfile\n");
     *offset = 0;
     lseek(bookglob.fd, 0, SEEK_SET);
@@ -145,9 +146,11 @@ struct book * findBook(char * title, int * offset){
         return NULL;
     }
     else{
+        printf("in else block\n");
         *offset = lseek(bookglob.fd, 0, SEEK_CUR);
         struct book *temp = (struct book *)malloc(sizeof(struct book));
         // printf("loop start\n");
+        printf("book count is %d", bookglob.count);
         for(int i=0; i<bookglob.count; i++){
             // printf("loop %d\n+++++", i );
             read(bookglob.fd, temp, sizeof(struct book));
@@ -158,8 +161,8 @@ struct book * findBook(char * title, int * offset){
             }
             else{
                 *offset = lseek(bookglob.fd, 0, SEEK_CUR);
-                printf("title1: %s", temp->title);
-                printf(" title2: %s\n", title);
+                printf("did not match with: \n");
+                showbook(*temp);
             }
         }
         // printf("loop end\n");
@@ -292,3 +295,33 @@ void endbook(){
     printf("endbook done\n");
 }
 
+char * getallBooks(){
+    lseek(bookglob.fd, 0, SEEK_SET);
+    int val;
+    read(bookglob.fd, &val, sizeof(int));
+    read(bookglob.fd, &bookglob.count, sizeof(int));
+    struct book * buf = malloc(sizeof(struct book));
+    char * ans;
+    char * ans1 = malloc(150*sizeof(char));
+    int n = 100*sizeof(struct book);//max 100 books
+    ans = malloc(100*sizeof(struct book));
+    printf("there are %d\n", bookglob.count);
+    for(int i=0; i<bookglob.count; i++){
+        read(bookglob.fd, buf, sizeof(struct book));
+        sprintf(ans1,"title: %s author: %s copies_left: %d\n", buf->title, buf->author, buf->copies_left);
+        strcat(ans, ans1);
+    }
+    if(bookglob.count == 0){
+        sprintf(ans, "no books right now!!\n");
+    }
+    return ans;
+}
+
+
+
+char * getBook(struct book b1){
+    char * ans;
+    ans = malloc(100*sizeof(struct book));
+    sprintf(ans, "title: %s author: %s copies_left: %d\n", b1.title, b1.author, b1.copies_left);
+    return ans;
+}

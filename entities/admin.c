@@ -38,7 +38,7 @@ bool adminequals(struct admin u1, struct admin u2){
 }
 
 void initadmin(){ //to be called only once
-    adminglob.fd  = open(admfile, O_CREAT|O_WRONLY, 0777);
+    adminglob.fd  = open(admfile, O_CREAT|O_WRONLY|O_TRUNC, 0777);
     if(adminglob.fd == -1){
         printf("open failed\n");
         exit(0);
@@ -136,20 +136,23 @@ void createAdmin(struct admin u1, int *status){
     *status = 0; //success
     sync();
     flock(adminglob.fd, LOCK_UN);
+    printf("create admin returning\n");
 }
 
 struct admin * findadmin(char * username, int * offset){
-    flock(adminglob.fd, LOCK_SH);
+    flock(adminglob.fd, LOCK_EX);
     *offset = 0;
     lseek(adminglob.fd, 0, SEEK_SET);
     read(adminglob.fd, &adminglob.cur_adm_id, sizeof(int));
     read(adminglob.fd, &adminglob.count, sizeof(int));
     //count is the number of records
     if(adminglob.count == 0){
+        printf("in if block\n");
         flock(adminglob.fd, LOCK_UN);
         return NULL;
     }
     else{
+        printf("in else block");
         *offset = lseek(adminglob.fd, 0, SEEK_CUR);
         struct admin *temp = (struct admin *)malloc(sizeof(struct admin));
         for(int i=0; i<adminglob.count; i++){
@@ -161,8 +164,8 @@ struct admin * findadmin(char * username, int * offset){
             }
             else{
                 *offset = lseek(adminglob.fd, 0, SEEK_CUR);
-                // printf("username1: %s", temp->username);
-                // printf(" username2: %s\n", username);
+                printf("did not match with: \n");
+                showadmin(*temp);
             }
         }
         sync();

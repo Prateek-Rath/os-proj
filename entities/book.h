@@ -42,6 +42,10 @@ void startbook();
 
 bool existsBook(struct book u1);
 
+char * getallBooks();
+
+char * getBook(struct book b1);
+
 void createBook(struct book u1, int *status);
 
 struct book * findBook(char * title, int * offset);

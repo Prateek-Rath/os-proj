@@ -11,9 +11,7 @@
 
 #include<pthread.h>
 
-#define PORT 5545
-
-
+#define PORT 5544
 
 enum states
 {
@@ -141,7 +139,7 @@ struct message{
 };
 
 struct reply{
-    char text[1000];
+    char text[10000];
     struct state newstate;
 };
 

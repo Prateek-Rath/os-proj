@@ -45,19 +45,47 @@ void * handleconn(void *comminfo){
         // printf("select returned %d", ret);
         read(newfd, &buf, sizeof(struct message));
         printf("received from client:  \n");
-        printf("client is in state: %d", buf.state.val);
+        printf("client is in state: %d\n", buf.state.val);
 
         int optodo = buf.operation;
         switch(optodo){
             case findbook:
-
+                struct reply reply;
+                int offset;
+                struct book * b1 = findBook(buf.dataptr.findbook.title, &offset);
+                if(b1 == NULL){
+                    printf("book was not found\n");
+                }
+                else{
+                    strcpy(reply.text, "here is the book\n");
+                    strcat(reply.text, getBook(*b1));
+                }
+                write(newfd, &reply, sizeof(struct reply));
                 break;
             case listbooks:
-
+                // reply;
+                strcpy(reply.text, getallBooks());
+                structstatecpy(&reply.newstate, &buf.state);
+                write(newfd, &reply, sizeof(struct reply));
                 break;
             case addbook:
-                
-            break;
+                // struct reply reply;
+                int status;
+                createBook(buf.dataptr.addbook.book, &status);
+                if(status == DUPLICATE_BOOK){
+                    strcpy(reply.text, "that already exists!!");
+                    structstatecpy(&reply.newstate, &buf.state);
+                }
+                else if(status == 0){
+                    strcpy(reply.text, "successfully created book!!");
+                    structstatecpy(&reply.newstate, &buf.state);
+                }
+                else{
+                    printf("some unknown error");
+                    printf("status is %d\n", status);
+                }
+                write(newfd, &reply, sizeof(struct reply));
+            break;  
             case deletebook:
             break;
             case modifybook:
@@ -69,11 +97,11 @@ void * handleconn(void *comminfo){
 
             case loginuser:
                 printf("user is trying to login!\n");
-                int status;
+                // int status;
                 printf("started validation\n");
                 validateUser(buf.dataptr.loginuser.username, buf.dataptr.loginuser.password, &status);
                 printf("validation done\n");
-                struct reply reply;
+                // struct reply reply;
                 if(status == USER_NOT_FOUND){
                     strcpy(reply.text, "no such user!, try again!");
                     reply.newstate.val = user_login_process;
@@ -165,7 +193,7 @@ void * handleconn(void *comminfo){
                 break;
 
             case registeradmin:
-            printf("admin is trying to register!\n");
+                printf("admin is trying to register!\n");
                 status;
                 printf("started registration\n");
                 showadmin(buf.dataptr.registeradmin.admin);
@@ -173,17 +201,24 @@ void * handleconn(void *comminfo){
                 printf("register call done\n");
                 // struct reply reply;
                 if(status == DUPLICATE_ADMIN){
+                    printf("here1\n");
                     strcpy(reply.text, "duplicate admin!, try again!");
                     reply.newstate.val = admin_register_process;
                     structadmincpy(&reply.newstate.who.admin, &buf.state.who.admin);
                 }
                 else if(status == 0){
+                    printf("here2\n");
                     strcpy(reply.text, "register success!!\n");
+                    printf("strcpy done\n");
                     reply.newstate.val = start;
                     int offset;
-                    struct admin * tempo = findadmin(buf.dataptr.registeruser.user.username, &offset);
+                    struct admin * tempo = findadmin(buf.dataptr.registeradmin.admin.username, &offset);
+                    if(tempo == NULL){
+                        printf("critical error this can't be true\n");
+                    }
+                    printf("findadmin done\n");
                     structadmincpy(&buf.state.who.admin, tempo);
-                    printf("after reg we check if the admin is there and we get\n");
+                    printf("after reg we check if the user is there and we get\n");
                     showadmin(buf.state.who.admin);
                     structadmincpy(&reply.newstate.who.admin, &buf.state.who.admin);
                 }

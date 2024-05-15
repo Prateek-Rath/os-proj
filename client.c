@@ -50,6 +50,21 @@ void showUserMenu(){
     printf("Enter opt: ");
 }
 
+void showAdminMenu(){
+    printf("Hey admin!\n");
+    printf("-----------------------------------------------------\n");
+    printf("Enter 1 to see list of books\n");
+    printf("Enter 2 to find a book by it's title\n");
+    printf("Enter 3 to add a book\n");
+    printf("Enter 4 to modify/update a book\n");
+    printf("Enter 5 to delete a book\n");
+    printf("Enter 6 to list all users\n");
+    printf("Enter 7 to see all borrow transactions\n");
+    printf("Enter 10 to logout\n");
+    printf("-----------------------------------------------------\n");
+    printf("Enter opt: ");
+}
+
 
 void assigndefault(void * ptr){
     memset(ptr, -1, sizeof(*ptr));
@@ -279,11 +294,22 @@ int main(){
                 request.state.val = state.val;
                 write(sockfd, &request, sizeof(struct message));
                 read(sockfd, &response, sizeof(struct reply));
-
+                printf("%s", response.text);
+                printf("---------------------\n");
                 break;
+
             case 2:
-
+                printf("we want to find books by their title\n");
+                // struct message request;
+                // struct reply response;
+                request.operation = findbook;
+                request.state.val = state.val;
+                write(sockfd, &request, sizeof(struct message));
+                read(sockfd, &response, sizeof(struct reply));
+                printf("%s", response.text);
+                printf("---------------------\n");
                 break;
+
             default:
                 break;
             }
@@ -292,9 +318,63 @@ int main(){
         }
         else if(state.val == admin_logged_in){
             printf("we are now in the admin logged in state!!!\n");
-            // enum states newstate = adminWork();
+            showAdminMenu();
+            scanf("%d", &opt);
+            switch (opt){
+                case 1:
+                    printf("we want to list all the books\n");
+                    struct message request;
+                    struct reply response;
+                    request.operation = listbooks;
+                    request.state.val = state.val;
+                    write(sockfd, &request, sizeof(struct message));
+                    read(sockfd, &response, sizeof(struct reply));
+                    printf("%s", response.text);
+                    printf("---------------------\n");
+                    break;
+
+                case 2:
+                    printf("we want to find book by title\n");
+                    // struct message request;
+                    // struct reply response;
+                    printf("Enter book title: ");
+                    char title[40];
+                    request.operation = findbook;
+                    scanf("%s", request.dataptr.findbook.title);
+                    request.state.val = state.val;
+                    
+                    write(sockfd, &request, sizeof(struct message));
+                    read(sockfd, &response, sizeof(struct reply));
+                    printf("%s", response.text);
+                    
+                    printf("---------------------\n");
+                    break;
+                
+                case 3:
+                    printf("we want to add book\n");
+                    // struct message request;
+                    // struct reply response;
+                    request.operation = addbook;
+                    request.state.val = state.val;
+                    printf("Enter title: ");
+                    scanf("%s", request.dataptr.addbook.book.title);
+                    printf("Enter author: ");
+                    scanf("%s", request.dataptr.addbook.book.author);
+                    printf("Enter category: ");
+                    scanf("%s", request.dataptr.addbook.book.category);
+                    printf("Enter number of copies available: ");
+                    scanf("%d", &request.dataptr.addbook.book.copies_left);
+                    write(sockfd, &request, sizeof(struct message));
+                    read(sockfd, &response, sizeof(struct reply));
+                    printf("%s", response.text);
+                    printf("---------------------\n");
+                    break;
+            }
+        }
+        else{
+            break;
         }
     }
     
-    
+    return 0;
 }

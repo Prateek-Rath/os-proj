@@ -33,7 +33,7 @@ bool borrowequals(struct borrow u1, struct borrow u2){
 }
 
 void initborrow(){ //to be called only once
-    borrowglob.fd  = open(borrfile, O_CREAT|O_WRONLY, 0777);
+    borrowglob.fd  = open(borrfile, O_CREAT|O_WRONLY|O_TRUNC, 0777);
     if(borrowglob.fd == -1){
         printf("open failed\n");
         exit(0);
