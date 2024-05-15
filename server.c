@@ -31,14 +31,7 @@ void * handleconn(void *comminfo){
     // FD_ZERO(&read_fds);
     // FD_SET(newfd, &read_fds);
     
-    inituser();
-    startuser();
-    initadmin();
-    startadmin();
-    initbook();
-    startbook();
-    initborrow();
-    startborrow();
+
     while(1){
         // printf("calling select\n");
         // int ret = select(newfd+1, &read_fds, NULL, NULL, NULL);
@@ -64,9 +57,13 @@ void * handleconn(void *comminfo){
                 break;
             case listbooks:
                 // reply;
-                strcpy(reply.text, getallBooks());
+                printf("get all books will be called\n");
+                char * x;
+                strcpy(reply.text, x);
+                printf("get all books done\n");
                 structstatecpy(&reply.newstate, &buf.state);
                 write(newfd, &reply, sizeof(struct reply));
+                free(x);
                 break;
             case addbook:
                 // struct reply reply;
@@ -87,11 +84,9 @@ void * handleconn(void *comminfo){
                 write(newfd, &reply, sizeof(struct reply));
             break;  
             case deletebook:
-                
                 deleteBook(buf.dataptr.deletebook.title, &status);
                 if(status == 0){
                     sprintf(reply.text , "deleted book successfully\n");
-                    
                 }
                 else if(status == NOT_YET_RETURNED){
                     sprintf(reply.text , "could not delete as someone has borrowed this book\n");
@@ -111,7 +106,7 @@ void * handleconn(void *comminfo){
                     structstatecpy(&reply.newstate, &buf.state);
                 }
                 else if(status == 0){
-                    strcpy(reply.text, "successfully created book!!");
+                    strcpy(reply.text, "successfully modified book!!");
                     structstatecpy(&reply.newstate, &buf.state);
                 }
                 else{
@@ -122,7 +117,6 @@ void * handleconn(void *comminfo){
                 break;
 
             case borrowbook:
-                
                 borrowBook(buf.dataptr.borrowbook.borrow, &status);
                 if(status == 0){
                     char * str = malloc(50);
@@ -159,8 +153,7 @@ void * handleconn(void *comminfo){
                 write(newfd, &reply, sizeof(struct reply));
                 break;
             case returnbook:
-                
-                returnBook(buf.dataptr.returnbook.borrow.title, buf.dataptr.returnbook.borrow.username, &status);
+                returnBook(buf.dataptr.returnbook.title, buf.dataptr.returnbook.username, &status);
                 if(status == 0){
                     char * str = malloc(50);
                     sprintf(str, "successful return\n");
@@ -170,7 +163,7 @@ void * handleconn(void *comminfo){
                 }
                 else if(status == BOOK_NOT_FOUND){
                     char * str = malloc(50);
-                    sprintf(str, "no such book!!\n");
+                    sprintf(str, "you don't have any such book!!\n");
                     strcpy(reply.text, str);
                     structstatecpy(&reply.newstate, &buf.state);
                     write(newfd, &reply, sizeof(struct reply));
@@ -184,14 +177,17 @@ void * handleconn(void *comminfo){
                 }
                 else if(status == NOT_ENOUGH_COPIES){
                     char * str = malloc(50);
-                    sprintf(str, "you don't have copies of that book\n");
+                    sprintf(str, "you don't have any such book\n");
                     strcpy(reply.text, str);
                     structstatecpy(&reply.newstate, &buf.state);
                     write(newfd, &reply, sizeof(struct reply));
                 }
                 break;
             case listusers:
-                
+                x = listUsers();
+                strcpy(reply.text, x);
+                write(newfd, &reply, sizeof(struct reply));
+                free(x);
                 break;
 
             case loginuser:
@@ -236,20 +232,20 @@ void * handleconn(void *comminfo){
                 // reply;
                 if(status == ADMIN_NOT_FOUND){
                     strcpy(reply.text, "no such user!, try again!");
-                    reply.newstate.val = user_login_process;
-                    structusercpy(&reply.newstate.who.user, &buf.state.who.user);
+                    reply.newstate.val = admin_login_process;
+                    structadmincpy(&reply.newstate.who.admin, &buf.state.who.admin);
                 }
                 else if(status == INCORRECT_PASSWORD){
                     strcpy(reply.text, "wrong password, try again!");
-                    reply.newstate.val = user_login_process;
-                    structusercpy(&reply.newstate.who.user, &buf.state.who.user);
+                    reply.newstate.val = admin_login_process;
+                    structadmincpy(&reply.newstate.who.admin, &buf.state.who.admin);
                 }
                 else if(status == 0){
                     strcpy(reply.text, "login success\n");
                     reply.newstate.val = admin_logged_in;
                     int offset;
-                    buf.state.who.admin = *findadmin(buf.dataptr.loginuser.username, &offset);
-                    structusercpy(&reply.newstate.who.user, &buf.state.who.user);
+                    buf.state.who.admin = *findadmin(buf.dataptr.loginadmin.username, &offset);
+                    structadmincpy(&reply.newstate.who.admin, &buf.state.who.admin);
                 }
                 else{
                     printf("unexpected error\n");
@@ -383,6 +379,14 @@ int main(){
     listen(sockfd, 1);
     printf("listening on port %d\n", PORT);
     int addrlen = sizeof(clientaddr);
+    // inituser();
+    startuser();
+    // initadmin();
+    startadmin();
+    // initbook();
+    startbook();
+    // initborrow();
+    startborrow();
     while(1){
         printf("in while loop\n");
         int newfd = accept(sockfd, (struct sockaddr*)&clientaddr, (socklen_t*)&addrlen);

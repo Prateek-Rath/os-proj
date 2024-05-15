@@ -38,7 +38,7 @@ struct user{
     char phone[20];//check if it is 10 digits if possible
 };
 
-
+char * listUsers();
 
 void structusercpy(struct user *u1, struct user *u2);
 

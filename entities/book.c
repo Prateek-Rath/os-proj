@@ -218,8 +218,6 @@ void updateBook(char *title, struct book newbook, int * status){
 
 
 void deleteBook(char * title, int * status){
-
-    
     int offset;
     printf("title is %s\n", title);
     struct book * u1 = findBook(title, &offset);
@@ -239,7 +237,7 @@ void deleteBook(char * title, int * status){
             return;
     }
 
-    flock(bookglob.fd, LOCK_SH); printf("share locked bookfile\n");
+    flock(bookglob.fd, LOCK_EX); printf("share locked bookfile\n");
     lseek(bookglob.fd, 0, SEEK_SET);
     read(bookglob.fd, &bookglob.cur_bk_id, sizeof(int));
     read(bookglob.fd, &bookglob.count, sizeof(int));
@@ -305,6 +303,9 @@ void endbook(){
 }
 
 char * getallBooks(){
+    printf("trying to get a shared lock on books\n");
+    flock(bookglob.fd, LOCK_SH);
+    printf("share locked books file\n");
     lseek(bookglob.fd, 0, SEEK_SET);
     int val;
     read(bookglob.fd, &val, sizeof(int));
@@ -323,6 +324,7 @@ char * getallBooks(){
     if(bookglob.count == 0){
         sprintf(ans, "no books right now!!\n");
     }
+    flock(bookglob.fd, LOCK_UN);
     return ans;
 }
 

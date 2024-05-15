@@ -165,7 +165,7 @@ void borrowBook(struct borrow u1, int *status){
         write(bookglob.fd, &b1, sizeof(struct book));
         *status = 0; //success
         lseek(borrowglob.fd, 0, SEEK_END);
-        printf("u1.title is now %s++\n", u1.title);
+        // printf("u1.title is now %s\n", u1.title);
         write(borrowglob.fd, &u1, sizeof(u1));
     }
     else{
@@ -221,16 +221,16 @@ struct borrow * findborrow(char * title, char * username, int * offset){
 
 
 void returnBook(char * title, char * username, int * status){
-    
+    printf("in returnBook function\n");
     int bkoffset;
     struct book * bptr = findBook(title, &bkoffset);
-    struct book b1 = *bptr;
+    
     if(bptr == NULL){
         printf("critical error, book doesn't exist!!\n");
         *status =  BOOK_NOT_FOUND;
         return;
     }
-    
+    struct book b1 = *bptr;
     
     int offset;
     struct borrow * u1 = findborrow(title, username, &offset);
@@ -255,6 +255,8 @@ void returnBook(char * title, char * username, int * status){
     borrowglob.count--;
     lseek(borrowglob.fd, sizeof(int), SEEK_SET);
     write(borrowglob.fd, &borrowglob.count, sizeof(int));
+    int endvalue = lseek(borrowglob.fd, 0, SEEK_END);
+    ftruncate(borrowglob.fd, (endvalue - sizeof(struct borrow)));
     flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
 
     //we also need to go to the book file and update there

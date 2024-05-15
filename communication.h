@@ -7,11 +7,17 @@
 #include"./entities/admin.h"
 #include"./entities/book.h"
 #include"./entities/borrow.h"
+#include<semaphore.h>
 #endif
 
 #include<pthread.h>
 
 #define PORT 5544
+
+// extern sem_t usersem;
+// extern sem_t booksem;
+// extern sem_t borrowsem;
+// extern sem_t adminsem;
 
 enum states
 {
@@ -70,7 +76,7 @@ enum operation{
     deleteadmin,
     deleteuser,
     listusers,
-    listadmins
+    listadmins,
 };
 
 union uni{
@@ -101,7 +107,8 @@ union uni{
     }borrowbook;
 
     struct returnbook{
-        struct borrow borrow;
+        char title[100];
+        char username[100];
     }returnbook;
 
     

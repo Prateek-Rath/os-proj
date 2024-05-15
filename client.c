@@ -322,9 +322,38 @@ int main(){
                 printf("Enter another/your own phone number: ");
                 scanf("%s", request.dataptr.borrowbook.borrow.phone);
                 strcpy(request.dataptr.borrowbook.borrow.username, state.who.user.username);
+                request.operation = borrowbook;
                 strcpy(request.dataptr.borrowbook.borrow.username, state.who.user.phone);
                 write(sockfd,&request, sizeof(struct message));
+                printf("request sent to server\n");
                 read(sockfd, &response, sizeof(struct reply));
+                printf("server sent: \n");
+                printf("%s", response.text);
+                break;
+
+            case 5:
+                printf("we want to return a book\n");
+                printf("enter book title: ");
+                scanf("%s", request.dataptr.returnbook.title);
+                request.operation = returnbook;
+                strcpy(request.dataptr.returnbook.username, state.who.user.username);
+                write(sockfd, &request, sizeof(struct message));
+                printf("request sent to server\n");
+                read(sockfd, &response, sizeof(struct reply));
+                printf("server sent:\n");
+                printf("%s", response.text);
+                break;
+            
+            case 10:
+                printf("logging out\n");
+                char username[20];
+                state.who.user.id = -1;
+                strcpy(state.who.user.username, "nobody");
+                strcpy(state.who.user.password, "whattodo");
+                strcpy(state.who.user.first_name, "yash");
+                strcpy(state.who.user.first_name, "ranjan");
+                state.val = start;
+                break;
 
             default:
                 break;
@@ -424,6 +453,19 @@ int main(){
                     request.operation = listusers;
                     write(sockfd, &request, sizeof(struct message));
                     read(sockfd, &response, sizeof(struct reply));
+                    printf("server sent: \n");
+                    printf("%s", response.text);
+                
+                case 10:
+                    printf("logging out\n");
+                    char username[20];
+                    state.who.user.id = -1;
+                    strcpy(state.who.user.username, "nobody");
+                    strcpy(state.who.user.password, "whattodo");
+                    strcpy(state.who.user.first_name, "yash");
+                    strcpy(state.who.user.first_name, "ranjan");
+                    state.val = start;
+                    break;
             }
         }
         else{
