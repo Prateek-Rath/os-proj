@@ -311,6 +311,7 @@ int main(){
                 request.state.val = state.val;
                 write(sockfd, &request, sizeof(struct message));
                 read(sockfd, &response, sizeof(struct reply));
+                printf("server sent: \n");
                 printf("%s", response.text);
                 printf("---------------------\n");
                 break;
@@ -347,6 +348,19 @@ int main(){
                 printf("server sent: \n");
                 printf("%s", response.text);
                 break;
+            case 4:
+                char username[20];
+                printf("see all books with this user\n");
+                printf("enter username: ");
+                scanf("%s", username);
+                
+                request.operation = getuserbooklist;
+                strcpy(request.dataptr.userbooks.username, username);
+                write(sockfd, &request, sizeof(struct message));
+                read(sockfd, &response, sizeof(struct reply));
+                printf("server sent: \n");
+                printf("%s", response.text);
+                break;
 
             case 5:
                 printf("we want to return a book\n");
@@ -363,7 +377,6 @@ int main(){
             
             case 10:
                 printf("logging out\n");
-                char username[20];
                 state.who.user.id = -1;
                 strcpy(state.who.user.username, "nobody");
                 strcpy(state.who.user.password, "whattodo");
@@ -472,8 +485,18 @@ int main(){
                     read(sockfd, &response, sizeof(struct reply));
                     printf("server sent: \n");
                     printf("%s", response.text);
+                    printf("---------------------\n");
                     break;
                 
+                case 7:
+                    printf("we want to see all borrows\n");
+                    request.operation = listborrows;
+                    write(sockfd, &request, sizeof(struct message));
+                    read(sockfd, &response, sizeof(struct reply));
+                    printf("server sent: \n");
+                    printf("%s", response.text);
+                    printf("---------------------\n");
+                    break;
                 case 10:
                     printf("logging out\n");
                     char username[20];

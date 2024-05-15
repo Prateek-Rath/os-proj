@@ -56,8 +56,11 @@ void showborrow(struct borrow u1);
     
 void showAllBorrows();
 
+char * getallBorrows();
+
 void endborrow();
 
+char * getBorrowList_user(char * username);
 
 bool isBorrowed(struct book b1);//tells if someone has taken this book
 

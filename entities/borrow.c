@@ -328,3 +328,55 @@ bool isBorrowed(struct book b1){
     }
     return false;
 }
+
+
+char * getBorrowList_user(char * username){
+    //get books borrowed by a user
+    flock(borrowglob.fd, LOCK_SH);
+    lseek(borrowglob.fd, 0, SEEK_SET);
+    read(borrowglob.fd, &borrowglob.cur_borr_id, sizeof(int));
+    read(borrowglob.fd, &borrowglob.count, sizeof(int));
+    char * ans;
+    ans = malloc(100*sizeof(struct user));
+    char * ans1 = malloc(3*sizeof(struct book));
+    struct borrow borrow1;
+    strcpy(ans, "");
+    for(int i=0; i<borrowglob.count; i++){
+        read(borrowglob.fd, &borrow1, sizeof(struct borrow));
+        if(strcpy(borrow1.username, username)){
+            int offset;
+            struct book * b1 = findBook(borrow1.title, &offset);
+            sprintf(ans1, "title: %s, author: %s catgory: %s\n", b1->title, b1->author, b1->category);
+            strcat(ans, ans1);
+        }
+    }
+    flock(borrowglob.fd, LOCK_UN);
+    return ans;
+}
+
+
+char * getallBorrows(){
+    printf("trying to get a shared lock on borrow\n");
+    flock(borrowglob.fd, LOCK_SH);
+    printf("share locked borrow file\n");
+    lseek(borrowglob.fd, 0, SEEK_SET);
+    int val;
+    read(borrowglob.fd, &val, sizeof(int));
+    read(borrowglob.fd, &bookglob.count, sizeof(int));
+    struct borrow * buf = malloc(sizeof(struct borrow));
+    char * ans;
+    char * ans1 = malloc(150*sizeof(char));
+    int n = 100*sizeof(struct borrow);//max 100 borrows
+    ans = malloc(100*sizeof(struct borrow));
+    printf("there are %d\n", borrowglob.count);
+    for(int i=0; i<borrowglob.count; i++){
+        read(borrowglob.fd, buf, sizeof(struct borrow));
+        sprintf(ans1,"title: %s username: %s phone: %s\n", buf->title, buf->username, buf->phone);
+        strcat(ans, ans1);
+    }
+    if(borrowglob.count == 0){
+        sprintf(ans, "no borrows right now!!\n");
+    }
+    flock(borrowglob.fd, LOCK_UN);
+    return ans;
+}

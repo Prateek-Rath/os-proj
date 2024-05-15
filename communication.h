@@ -77,6 +77,8 @@ enum operation{
     deleteuser,
     listusers,
     listadmins,
+    listborrows,
+    getuserbooklist,
     donothing
 };
 
@@ -138,6 +140,10 @@ union uni{
     struct deleteadmin{
         char username[20];
     }deleteadmin;
+
+    struct userbooks{
+        char username[20];
+    }userbooks;
 
 
 }uni;

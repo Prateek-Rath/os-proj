@@ -241,14 +241,13 @@ char * listUsers(){
     read(userglob.fd, &userglob.cur_usr_id, sizeof(int));
     read(userglob.fd, &userglob.count, sizeof(int));
     strcpy(ans, "");
-    printf("userglob.count in %d\n", userglob.count);
+    printf("userglob.count in listUsers is %d\n", userglob.count);
+    char * ans1 = malloc(200);
     for(int i=0; i<userglob.count; i++){
-        char * ans1 = malloc(200);
         struct user temp;
-        read(userglob.fd, &temp, sizeof(int));
+        read(userglob.fd, &temp, sizeof(struct user));
         sprintf(ans1, "username: %s, phone: %s, first_name: %s, last_name: %s\n", temp.username, temp.phone, temp.first_name, temp.last_name);
         strcat(ans, ans1);
-        free(ans1);
     }
     flock(userglob.fd, LOCK_UN);
     return ans;

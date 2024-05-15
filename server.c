@@ -42,6 +42,7 @@ void * handleconn(void *comminfo){
         switch(optodo){
             case donothing:
                 // printf("op to do is nothing\n");
+                close(newfd);
                 pthread_exit(NULL);
                 break;
             case findbook:
@@ -327,6 +328,25 @@ void * handleconn(void *comminfo){
                 write(newfd, &reply, sizeof(struct reply));
                 printf("replied!!\n");
                 break;
+            case getuserbooklist:
+                // char * x = getBorrowList_user(username);
+                // strcpy(response.text, x);
+                // request.dataptr.userbooks.username
+                char * result = getBorrowList_user(buf.dataptr.userbooks.username);
+                strcpy(reply.text, result);
+                structstatecpy(&reply.newstate, &buf.state);
+                write(newfd, &reply, sizeof(struct reply));
+                free(result);
+                break;
+            
+            case listborrows:
+                result = getallBorrows();
+                strcpy(reply.text, result);
+                structstatecpy(&reply.newstate, &buf.state);
+                write(newfd, &reply, sizeof(struct reply));
+                free(result);
+                break;
+
             case deleteadmin:
             break;
             case deleteuser:
