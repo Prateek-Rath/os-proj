@@ -476,7 +476,7 @@ int main(){
                     printf("Enter title: ");
                     scanf("%s", request.dataptr.deletebook.title);
                     write(sockfd, &request, sizeof(struct message));
-                    read(sockfd, &response, sizeof(struct message));
+                    read(sockfd, &response, sizeof(struct reply));
                     printf("%s", response.text);
                     printf("---------------------\n");
                     presenttocont();
