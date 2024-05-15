@@ -11,6 +11,7 @@
 #include<stdlib.h>
 #include<stdbool.h>
 #include <sys/file.h>
+#include<semaphore.h>
 
 
 #define DUPLICATE_BOOK 2
@@ -26,6 +27,7 @@ struct bookglobals{
 };
 
 extern struct bookglobals bookglob;
+extern sem_t booksem;
 
 struct book{//we assume one book has only one author
     int id;

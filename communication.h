@@ -12,12 +12,8 @@
 
 #include<pthread.h>
 
-#define PORT 5544
+#define PORT 5545
 
-// extern sem_t usersem;
-// extern sem_t booksem;
-// extern sem_t borrowsem;
-// extern sem_t adminsem;
 
 enum states
 {

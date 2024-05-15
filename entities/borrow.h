@@ -12,6 +12,7 @@
 #include<stdbool.h>
 #include <sys/file.h>
 #include"book.h"
+#include<semaphore.h>
 
 #define DUPLICATE_BORROW 2
 #define BORROW_NOT_FOUND 3
@@ -36,6 +37,7 @@ struct borrowglobals{
 };
 
 extern struct borrowglobals borrowglob;
+extern sem_t borrowsem;
 
 
 bool borrowequals(struct borrow u1, struct borrow u2);

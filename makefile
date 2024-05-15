@@ -1,30 +1,28 @@
-# CC=gcc
-# CFLAGS=-I.
-
-# server: 
-# 	$(CC) -o server server.c ./entities/user.c ./entities/admin.c ./entities/book.c ./entities/borrow.c
-
-# client: 
-# 	$(CC) -o client client.c ./entities/user.c ./entities/admin.c ./entities/book.c ./entities/borrow.c
-
 CC=gcc
 CFLAGS=-I.
-SERVER_OBJS = server.o ./entities/user.o ./entities/admin.o ./entities/book.o ./entities/borrow.o
-CLIENT_OBJS = client.o ./entities/user.o ./entities/admin.o ./entities/book.o ./entities/borrow.o
 
 all: server client
 
-server: $(SERVER_OBJS)
-	$(CC) -o server $(SERVER_OBJS)
+server: server.o user.o admin.o book.o borrow.o
+	$(CC) -o server server.o user.o admin.o book.o borrow.o
 
-client: $(CLIENT_OBJS)
-	$(CC) -o client $(CLIENT_OBJS)
+client: client.o user.o admin.o book.o borrow.o
+	$(CC) -o client client.o user.o admin.o book.o borrow.o
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+server.o: ./entities/user.c ./entities/admin.c ./entities/book.c ./entities/borrow.c communication.h
+	$(CC) -c server.c
 
-./entities/%.o: ./entities/%.c ./entities/%.h
-	$(CC) $(CFLAGS) -c $< -o $@
+client.o: ./entities/user.c ./entities/admin.c ./entities/book.c ./entities/borrow.c communication.h
+	$(CC) -c client.c
 
-clean:
-	rm -f server client $(SERVER_OBJS) $(CLIENT_OBJS) ./entities/*.o
+user.o: ./entities/user.c ./entities/user.h
+	$(CC) -c ./entities/user.c
+
+admin.o: ./entities/admin.c ./entities/admin.h
+	$(CC) -c ./entities/admin.c
+
+book.o: ./entities/book.c ./entities/book.h
+	$(CC) -c ./entities/book.c
+
+borrow.o: ./entities/borrow.c ./borrow/borrow.h
+	$(CC) -c ./entities/borrow.c

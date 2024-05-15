@@ -11,6 +11,7 @@
 #include<stdlib.h>
 #include <sys/file.h>
 #include <errno.h>
+#include<semaphore.h>
 
 
 
@@ -28,6 +29,7 @@ struct userglobals{
 } ;
 
 extern struct userglobals userglob;
+extern sem_t usersem;
 
 struct user{
     int id; //primary key //the id is something that I decide // and I auto increment it....

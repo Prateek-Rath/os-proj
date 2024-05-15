@@ -8,15 +8,14 @@
 #include<stdlib.h>
 #include <sys/file.h>
 #include <errno.h>
+#include<semaphore.h>
 
-#ifndef ALL
-#define ALL
+
 #include"user.h"
-#endif
 
 struct userglobals userglob;
 
-
+sem_t usersem;
 
 
 void structusercpy(struct user *u1, struct user *u2){
@@ -69,13 +68,15 @@ void inituser(){ //to be called only once
     }
     userglob.cur_usr_id = 0;
     userglob.count = 0;
-    flock(userglob.fd, LOCK_EX); printf("exclusive locked userfile");
+    flock(userglob.fd, LOCK_EX); 
+    // printf("exclusive locked userfile");
     write(userglob.fd, &userglob.cur_usr_id, sizeof(int));
     write(userglob.fd, &userglob.count, sizeof(int));
-    flock(userglob.fd, LOCK_UN); printf("unlocked userfile\n");
+    flock(userglob.fd, LOCK_UN); 
+    // printf("unlocked userfile\n");
     close(userglob.fd);
     userglob.fd = -1;
-    printf("inituser done\n");
+    // printf("inituser done\n");
     
     sync();
 }
@@ -84,6 +85,7 @@ void inituser(){ //to be called only once
 void startuser(){
     //open required files
     userglob.fd = open(usrfile, O_RDWR, 0777);
+    sem_init(&usersem, 1, 1);
     flock(userglob.fd, LOCK_SH);
     lseek(userglob.fd, 0, SEEK_SET);
     int ret = read(userglob.fd, &userglob.cur_usr_id, sizeof(int));
@@ -97,7 +99,7 @@ void startuser(){
         flock(userglob.fd, LOCK_UN);
         exit(0);
     }
-    printf("startuser done\n");
+    // printf("startuser done\n");
     flock(userglob.fd, LOCK_UN);
     sync();
     return ;
@@ -144,9 +146,7 @@ void createUser(struct user u1, int *status){
     //open the file 
     //ensure id and username are unique
     //insert at the end of the file
-    printf("received user: \n");
-    showuser(u1);
-    printf("-===========================-\n");
+    // printf("received user: \n");
     flock(userglob.fd, LOCK_EX);
     lseek(userglob.fd, 0, SEEK_SET);
     if(existsUser(u1)){
@@ -169,9 +169,6 @@ void createUser(struct user u1, int *status){
     // printf("wrote %d\n", userglob.cur_usr_id);
     // printf("wrote count: %d\n", userglob.count);
 
-    
-    printf("just before writing to the file ################################\n");
-    showuser(u1);
     lseek(userglob.fd, 0, SEEK_END);
     write(userglob.fd, &u1, sizeof(u1));
 
@@ -184,23 +181,20 @@ void createUser(struct user u1, int *status){
 
 
 struct user * finduser(char * username, int * offset){
-    printf("username passed to finduser is %s", username);
-    printf("attempting to share lock userfile\n");
+    // printf("attempting to share lock userfile\n");
     flock(userglob.fd, LOCK_EX);
-    printf("share locked userfile\n");
+    // printf("share locked userfile\n");
     *offset = 0;
     lseek(userglob.fd, 0, SEEK_SET);
     read(userglob.fd, &userglob.cur_usr_id, sizeof(int));
     read(userglob.fd, &userglob.count, sizeof(int));
     //count is the number of records
     if(userglob.count == 0){
-        printf("in if block\n");
         flock(userglob.fd, LOCK_UN);
-        printf("unlocked userfile\n");
+        // printf("unlocked userfile\n");
         return NULL;
     }
     else{
-        printf("in else block");
         *offset = lseek(userglob.fd, 0, SEEK_CUR);
         struct user *temp = (struct user *)malloc(sizeof(struct user));
         for(int i=0; i<userglob.count; i++){
@@ -218,12 +212,12 @@ struct user * finduser(char * username, int * offset){
             }
             else{
                 *offset = lseek(userglob.fd, 0, SEEK_CUR);
-                printf("did not match with: \n");
-                showuser(*temp);
+                // printf("did not match with: \n");
+                // showuser(*temp);
             }
         }
         sync();
-        printf("unlocked userfile\n");
+        // printf("unlocked userfile\n");
         flock(userglob.fd, LOCK_UN);
         if(existsUser(*temp)){
             printf("this should never ever happend\n");
@@ -241,7 +235,7 @@ char * listUsers(){
     read(userglob.fd, &userglob.cur_usr_id, sizeof(int));
     read(userglob.fd, &userglob.count, sizeof(int));
     strcpy(ans, "");
-    printf("userglob.count in listUsers is %d\n", userglob.count);
+    // printf("userglob.count in listUsers is %d\n", userglob.count);
     char * ans1 = malloc(200);
     for(int i=0; i<userglob.count; i++){
         struct user temp;
@@ -254,27 +248,27 @@ char * listUsers(){
 }
 
 void validateUser(char * username, char * password, int * status){
-    printf("in validateUser function\n");
+    // printf("in validateUser function\n");
     int offset;
     struct user * u1 = finduser(username, &offset);
     if(u1 == NULL){
-        printf("user not found");
+        // printf("user not found");
         *status = USER_NOT_FOUND;
         return;
     }
     else{
         if(strcmp(u1->password, password) == 0){
-            printf("successful validation\n");
+            // printf("successful validation\n");
             *status = 0;
         }
         else{
-            printf("wrong password");
+            // printf("wrong password");
             *status = INCORRECT_PASSWORD;
         }
     }
-    printf("doing free\n");
+    // printf("doing free\n");
     free(u1);
-    printf("free done\n");
+    // printf("free done\n");
 }
 
 void updateUser(char *username, struct user newuser, int * status){
@@ -295,9 +289,10 @@ void updateUser(char *username, struct user newuser, int * status){
         read(userglob.fd, &olduser, sizeof(struct user));
         lseek(userglob.fd, offset, SEEK_SET);
         if(existsUser(newuser) && (strcmp(newuser.username, olduser.username) != 0)){
-            printf("there is already a user with that phone number or username\n");
+            // printf("there is already a user with that phone number or username\n");
             *status = DUPLICATE_USER;
             flock(userglob.fd, LOCK_UN);
+            free(u1);
             return;
         }
         else{
@@ -306,10 +301,12 @@ void updateUser(char *username, struct user newuser, int * status){
             *status = 0;
             sync();
             flock(userglob.fd, LOCK_EX);
+            free(u1);
             return;
         }
         
     }
+    free(u1);
     flock(userglob.fd, LOCK_EX);
 }
 
@@ -347,6 +344,7 @@ void deleteUser(char * username, int * status){
     int pos = lseek(userglob.fd, 0, SEEK_END);
     ftruncate(userglob.fd, pos-sizeof(struct user));
     flock(userglob.fd, LOCK_UN);
+    free(u1);
     sync();
 }
 

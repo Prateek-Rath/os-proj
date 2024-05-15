@@ -40,36 +40,52 @@ void * handleconn(void *comminfo){
 
         int optodo = buf.operation;
         switch(optodo){
+            // printf("opttodo is %d\n");
             case donothing:
-                // printf("op to do is nothing\n");
+                printf("someone asked to do is nothing\n");
                 close(newfd);
                 pthread_exit(NULL);
                 break;
             case findbook:
+                printf("someone asked to findbook\n");
+                sem_wait(&booksem);
                 struct reply reply;
                 int offset;
                 struct book * b1 = findBook(buf.dataptr.findbook.title, &offset);
                 if(b1 == NULL){
                     printf("book was not found\n");
+                    strcpy(reply.text, "that book is not there\n");
                 }
                 else{
+                    printf("book found!\n");
                     strcpy(reply.text, "here is the book\n");
                     strcat(reply.text, getBook(*b1));
                 }
                 write(newfd, &reply, sizeof(struct reply));
+                printf("reply sent\n");
+                sem_post(&booksem);
                 break;
+                
             case listbooks:
-                // reply;
-                printf("get all books will be called\n");
+                printf("someone asked to list all the books\n");
+                sem_wait(&booksem);
+                // printf("get all books will be called\n");
                 char * x = getallBooks();
+                printf("x is %s\n", x);
+                strcpy(reply.text, "");
                 strcpy(reply.text, x);
-                printf("get all books done\n");
+                // printf("get all books done\n");
                 structstatecpy(&reply.newstate, &buf.state);
                 write(newfd, &reply, sizeof(struct reply));
+                printf("reply sent\n");
+                // memset(x, 0, 100);
                 free(x);
+                sem_post(&booksem);
                 break;
             case addbook:
                 // struct reply reply;
+                printf("someone asked to add a new book\n");
+                sem_wait(&booksem);
                 int status;
                 createBook(buf.dataptr.addbook.book, &status);
                 if(status == DUPLICATE_BOOK){
@@ -77,7 +93,7 @@ void * handleconn(void *comminfo){
                     structstatecpy(&reply.newstate, &buf.state);
                 }
                 else if(status == 0){
-                    strcpy(reply.text, "successfully created book!!");
+                    strcpy(reply.text, "successfully added book!!");
                     structstatecpy(&reply.newstate, &buf.state);
                 }
                 else{
@@ -85,8 +101,12 @@ void * handleconn(void *comminfo){
                     printf("status is %d\n", status);
                 }
                 write(newfd, &reply, sizeof(struct reply));
-            break;  
+                printf("reply sent\n");
+                sem_post(&booksem);
+                break;  
             case deletebook:
+                printf("someone asked to delete a book\n");
+                sem_wait(&booksem);
                 deleteBook(buf.dataptr.deletebook.title, &status);
                 if(status == 0){
                     sprintf(reply.text , "deleted book successfully\n");
@@ -94,15 +114,21 @@ void * handleconn(void *comminfo){
                 else if(status == NOT_YET_RETURNED){
                     sprintf(reply.text , "could not delete as someone has borrowed this book\n");
                 }
-                else {
+                else if(status == BOOK_NOT_FOUND){
+                    sprintf(reply.text , "no such book exists\n");
+                }
+                else{
                     printf("some other error\n");
                     exit(0);
                 }
                 write(newfd, &reply, sizeof(struct reply));
+                printf("reply sent\n");
+                sem_post(&booksem);
                 break;
 
             case modifybook:
-                
+                printf("someone asked to modify a book\n");
+                sem_wait(&booksem);
                 updateBook(buf.dataptr.modifybook.oldtitle, buf.dataptr.modifybook.book, &status);
                 if(status == DUPLICATE_BOOK){
                     strcpy(reply.text, "that already exists!!");
@@ -117,9 +143,15 @@ void * handleconn(void *comminfo){
                     printf("status is %d\n", status);
                 }
                 write(newfd, &reply, sizeof(struct reply));
+                printf("reply sent\n");
+                sem_post(&booksem);
                 break;
 
             case borrowbook:
+                printf("someone asked to borrow a book\n");
+                sem_wait(&usersem);
+                sem_wait(&booksem);
+                sem_wait(&borrowsem);
                 borrowBook(buf.dataptr.borrowbook.borrow, &status);
                 if(status == 0){
                     char * str = malloc(50);
@@ -154,51 +186,70 @@ void * handleconn(void *comminfo){
                     exit(0);
                 }
                 write(newfd, &reply, sizeof(struct reply));
+                printf("reply sent\n");
+                sem_post(&usersem);
+                sem_post(&booksem);
+                sem_post(&borrowsem);
                 break;
             case returnbook:
+                printf("someone wanted to return a book");
+                sem_wait(&usersem);
+                sem_wait(&booksem);
+                sem_wait(&borrowsem);
                 returnBook(buf.dataptr.returnbook.title, buf.dataptr.returnbook.username, &status);
                 if(status == 0){
                     char * str = malloc(50);
                     sprintf(str, "successful return\n");
                     strcpy(reply.text, str);
                     structstatecpy(&reply.newstate, &buf.state);
-                    write(newfd, &reply, sizeof(struct reply));
+                    
                 }
                 else if(status == BOOK_NOT_FOUND){
                     char * str = malloc(50);
                     sprintf(str, "you don't have any such book!!\n");
                     strcpy(reply.text, str);
                     structstatecpy(&reply.newstate, &buf.state);
-                    write(newfd, &reply, sizeof(struct reply));
+                    
                 }
                 else if(status == USER_NOT_FOUND){
                     char * str = malloc(50);
                     sprintf(str, "no such user!!\n");
                     strcpy(reply.text, str);
                     structstatecpy(&reply.newstate, &buf.state);
-                    write(newfd, &reply, sizeof(struct reply));
+                    
                 }
                 else if(status == NOT_ENOUGH_COPIES){
                     char * str = malloc(50);
                     sprintf(str, "you don't have any such book\n");
                     strcpy(reply.text, str);
                     structstatecpy(&reply.newstate, &buf.state);
-                    write(newfd, &reply, sizeof(struct reply));
+                    
                 }
+                write(newfd, &reply, sizeof(struct reply));
+                printf("reply sent\n");
+                sem_post(&usersem);
+                sem_post(&booksem);
+                sem_post(&borrowsem);
                 break;
             case listusers:
+                printf("someone wanted the list of all users\n");
+                sem_wait(&usersem);
                 x = listUsers();
                 strcpy(reply.text, x);
                 write(newfd, &reply, sizeof(struct reply));
+                printf("reply sent\n");
                 free(x);
+                sem_post(&usersem);
                 break;
 
             case loginuser:
-                printf("user is trying to login!\n");
+                printf("some user wanted to login\n");
+                sem_post(&usersem);
+                // printf("user is trying to login!\n");
                 // 
-                printf("started validation\n");
+                // printf("started validation\n");
                 validateUser(buf.dataptr.loginuser.username, buf.dataptr.loginuser.password, &status);
-                printf("validation done\n");
+                // printf("validation done\n");
                 // struct reply reply;
                 if(status == USER_NOT_FOUND){
                     strcpy(reply.text, "no such user!, try again!");
@@ -220,18 +271,20 @@ void * handleconn(void *comminfo){
                 else{
                     printf("unexpected error\n");
                 }
-                printf("going to write the reply\n");
-                printf("replytext is %s\n", reply.text);
+                // printf("going to write the reply\n");
+                // printf("replytext is %s\n", reply.text);
                 write(newfd, &reply, sizeof(struct reply));
-                printf("replied!!\n");
-                
+                printf("reply sent\n");
+                sem_post(&usersem);
                 break;
 
             case loginadmin:
-                printf("admin is trying to login!\n");
-                printf("started validation\n");
+                printf("some admin wanted to login!\n");
+                sem_post(&adminsem);
+                
+                // printf("started validation\n");
                 validateAdmin(buf.dataptr.loginadmin.username, buf.dataptr.loginadmin.password, &status);
-                printf("validation done\n");
+                // printf("validation done\n");
                 // reply;
                 if(status == ADMIN_NOT_FOUND){
                     strcpy(reply.text, "no such user!, try again!");
@@ -253,18 +306,21 @@ void * handleconn(void *comminfo){
                 else{
                     printf("unexpected error\n");
                 }
-                printf("going to write the reply\n");
-                printf("replytext is %s\n", reply.text);
+                // printf("going to write the reply\n");
+                // printf("replytext is %s\n", reply.text);
                 write(newfd, &reply, sizeof(struct reply));
-                printf("replied!!\n");
+                printf("reply sent\n");
+                sem_post(&adminsem);
                 break;
             case registeruser:
                 printf("user is trying to register!\n");
+                sem_wait(&usersem);
+            
                 status;
-                printf("started registration\n");
+                // printf("started registration\n");
                 showuser(buf.dataptr.registeruser.user);
                 createUser(buf.dataptr.registeruser.user, &status);
-                printf("register call done\n");
+                // printf("register call done\n");
                 // struct reply reply;
                 if(status == DUPLICATE_USER){
                     strcpy(reply.text, "duplicate user!, try again!");
@@ -277,74 +333,85 @@ void * handleconn(void *comminfo){
                     int offset;
                     struct user * tempo = finduser(buf.dataptr.registeruser.user.username, &offset);
                     structusercpy(&buf.state.who.user, tempo);
-                    printf("after reg we check if the user is there and we get\n");
-                    showuser(buf.state.who.user);
+                    // printf("after reg we check if the user is there and we get\n");
+                    // showuser(buf.state.who.user);
                     structusercpy(&reply.newstate.who.user, &buf.state.who.user);
                 }
                 else{
                     printf("unexpected error\n");
                 }
-                printf("going to write the reply\n");
-                printf("replytext is %s\n", reply.text);
+                // printf("going to write the reply\n");
+                // printf("replytext is %s\n", reply.text);
                 write(newfd, &reply, sizeof(struct reply));
-                printf("replied!!\n");
+                printf("reply sent!!\n");
+                sem_post(&usersem);
                 break;
 
             case registeradmin:
                 printf("admin is trying to register!\n");
-                status;
-                printf("started registration\n");
+                sem_wait(&adminsem);
+                // printf("started registration\n");
                 showadmin(buf.dataptr.registeradmin.admin);
                 createAdmin(buf.dataptr.registeradmin.admin, &status);
-                printf("register call done\n");
+                // printf("register call done\n");
                 // struct reply reply;
                 if(status == DUPLICATE_ADMIN){
-                    printf("here1\n");
                     strcpy(reply.text, "duplicate admin!, try again!");
                     reply.newstate.val = admin_register_process;
                     structadmincpy(&reply.newstate.who.admin, &buf.state.who.admin);
                 }
                 else if(status == 0){
-                    printf("here2\n");
                     strcpy(reply.text, "register success!!\n");
-                    printf("strcpy done\n");
+                    // printf("strcpy done\n");
                     reply.newstate.val = start;
                     int offset;
                     struct admin * tempo = findadmin(buf.dataptr.registeradmin.admin.username, &offset);
                     if(tempo == NULL){
                         printf("critical error this can't be true\n");
                     }
-                    printf("findadmin done\n");
                     structadmincpy(&buf.state.who.admin, tempo);
-                    printf("after reg we check if the user is there and we get\n");
-                    showadmin(buf.state.who.admin);
+                    // printf("after reg we check if the user is there and we get\n");
+                    // showadmin(buf.state.who.admin);
                     structadmincpy(&reply.newstate.who.admin, &buf.state.who.admin);
                 }
                 else{
                     printf("unexpected error\n");
                 }
-                printf("going to write the reply\n");
-                printf("replytext is %s\n", reply.text);
+                // printf("going to write the reply\n");
+                // printf("replytext is %s\n", reply.text);
                 write(newfd, &reply, sizeof(struct reply));
-                printf("replied!!\n");
+                printf("reply sent\n");
+                sem_post(&adminsem);
                 break;
             case getuserbooklist:
                 // char * x = getBorrowList_user(username);
                 // strcpy(response.text, x);
                 // request.dataptr.userbooks.username
+                printf("some user wants to know which books he borrowed\n");
+                sem_wait(&usersem);
+                sem_wait(&booksem);
+                sem_wait(&borrowsem);
                 char * result = getBorrowList_user(buf.dataptr.userbooks.username);
                 strcpy(reply.text, result);
                 structstatecpy(&reply.newstate, &buf.state);
                 write(newfd, &reply, sizeof(struct reply));
+                printf("reply sent\n");
                 free(result);
+                sem_post(&usersem);
+                sem_post(&booksem);
+                sem_post(&borrowsem);
                 break;
             
             case listborrows:
+                printf("someone wants to see all current borrows\n");
+                sem_wait(&borrowsem);
                 result = getallBorrows();
                 strcpy(reply.text, result);
                 structstatecpy(&reply.newstate, &buf.state);
                 write(newfd, &reply, sizeof(struct reply));
+                printf("reply sent\n");
                 free(result);
+                sem_post(&borrowsem);
                 break;
 
             case deleteadmin:
@@ -410,7 +477,6 @@ int main(){
     // initborrow();
     startborrow();
     while(1){
-        printf("in while loop\n");
         int newfd = accept(sockfd, (struct sockaddr*)&clientaddr, (socklen_t*)&addrlen);
         if(newfd == -1){
             printf("connection failed\n");

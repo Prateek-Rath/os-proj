@@ -7,14 +7,12 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include <sys/file.h>
-#ifndef ALL
-#define ALL
 #include"admin.h"
-#endif
+#include<semaphore.h>
 
 
 struct adminglobals adminglob;
-
+sem_t adminsem;
 
 void structadmincpy(struct admin* a1, struct admin* a2){
     a1->id = a2->id;
@@ -45,13 +43,15 @@ void initadmin(){ //to be called only once
     }
     adminglob.cur_adm_id = 0;
     adminglob.count = 0;
-    flock(adminglob.fd, LOCK_EX); printf("exclusive locked adminfile");
+    flock(adminglob.fd, LOCK_EX); 
+    // printf("exclusive locked adminfile");
     write(adminglob.fd, &adminglob.cur_adm_id, sizeof(int));
     write(adminglob.fd, &adminglob.count, sizeof(int));
-    flock(adminglob.fd, LOCK_UN); printf("unlocked adminfile\n");
+    flock(adminglob.fd, LOCK_UN); 
+    // printf("unlocked adminfile\n");
     close(adminglob.fd);
     adminglob.fd = -1;
-    printf("initadmin done\n");
+    // printf("initadmin done\n");
     
     sync();
 }
@@ -60,6 +60,7 @@ void initadmin(){ //to be called only once
 void startadmin(){
     //open required files
     adminglob.fd = open(admfile, O_RDWR, 0777);
+    sem_init(&adminsem, 1, 1);
     int ret = read(adminglob.fd, &adminglob.cur_adm_id, sizeof(int));
     flock(adminglob.fd, LOCK_SH);
     read(adminglob.fd, &adminglob.count, sizeof(int));
@@ -72,7 +73,7 @@ void startadmin(){
         flock(adminglob.fd, LOCK_UN);
         exit(0);
     }
-    printf("startadmin done\n");
+    // printf("startadmin done\n");
     flock(adminglob.fd, LOCK_UN);
     sync();
     return ;
@@ -136,7 +137,7 @@ void createAdmin(struct admin u1, int *status){
     *status = 0; //success
     sync();
     flock(adminglob.fd, LOCK_UN);
-    printf("create admin returning\n");
+    // printf("create admin returning\n");
 }
 
 struct admin * findadmin(char * username, int * offset){
@@ -147,12 +148,12 @@ struct admin * findadmin(char * username, int * offset){
     read(adminglob.fd, &adminglob.count, sizeof(int));
     //count is the number of records
     if(adminglob.count == 0){
-        printf("in if block\n");
+        // printf("in if block\n");
         flock(adminglob.fd, LOCK_UN);
         return NULL;
     }
     else{
-        printf("in else block");
+        // printf("in else block");
         *offset = lseek(adminglob.fd, 0, SEEK_CUR);
         struct admin *temp = (struct admin *)malloc(sizeof(struct admin));
         for(int i=0; i<adminglob.count; i++){
@@ -164,7 +165,7 @@ struct admin * findadmin(char * username, int * offset){
             }
             else{
                 *offset = lseek(adminglob.fd, 0, SEEK_CUR);
-                printf("did not match with: \n");
+                // printf("did not match with: \n");
                 showadmin(*temp);
             }
         }
@@ -177,27 +178,27 @@ struct admin * findadmin(char * username, int * offset){
 
 
 void validateAdmin(char * username, char * password, int * status){
-    printf("in validateAdmin function\n");
+    // printf("in validateAdmin function\n");
     int offset;
     struct admin * u1 = findadmin(username, &offset);
     if(u1 == NULL){
-        printf("admin not found");
+        // printf("admin not found");
         *status = ADMIN_NOT_FOUND;
         return;
     }
     else{
         if(strcmp(u1->password, password) == 0){
-            printf("successful validation\n");
+            // printf("successful validation\n");
             *status = 0;
         }
         else{
-            printf("wrong password");
+            // printf("wrong password");
             *status = INCORRECT_PASSWORD;
         }
     }
-    printf("doing free\n");
+    // printf("doing free\n");
     free(u1);
-    printf("free done\n");
+    // printf("free done\n");
 }
 
 
@@ -219,9 +220,10 @@ void updateAdmin(char *username, struct admin newadmin, int * status){
         read(adminglob.fd, &oldadmin, sizeof(struct admin));
         lseek(adminglob.fd, offset, SEEK_SET);
         if(existsAdmin(newadmin) && (strcmp(newadmin.username, oldadmin.username) != 0)){
-            printf("there is already a admin with that phone number or username\n");
+            // printf("there is already a admin with that phone number or username\n");
             *status = DUPLICATE_ADMIN;
             flock(adminglob.fd, LOCK_UN);
+            free(u1);
             return;
         }
         else{
@@ -229,12 +231,13 @@ void updateAdmin(char *username, struct admin newadmin, int * status){
             write(adminglob.fd, &newadmin, sizeof(struct admin));
             *status = 0;
             sync();
-            flock(adminglob.fd, LOCK_EX);
+            flock(adminglob.fd, LOCK_UN);
+            free(u1);
             return;
         }
         
     }
-    flock(adminglob.fd, LOCK_EX);
+    flock(adminglob.fd, LOCK_UN);
 }
 
 
@@ -271,6 +274,7 @@ void deleteAdmin(char * username, int * status){
     int pos = lseek(adminglob.fd, 0, SEEK_END);
     ftruncate(adminglob.fd, pos-sizeof(struct admin));
     flock(adminglob.fd, LOCK_UN);
+    free(u1);
     sync();
 }
 
@@ -309,7 +313,7 @@ void showAllAdmins(){
 void endadmin(){
     close(adminglob.fd);
     adminglob.fd = -1;
-    printf("endadmin done\n");
+    // printf("endadmin done\n");
 }
 
 

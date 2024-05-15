@@ -10,6 +10,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include <sys/file.h>
+#include<semaphore.h>
 
 
 
@@ -27,6 +28,7 @@ struct adminglobals{
 } ;
 
 extern struct adminglobals adminglob;
+extern sem_t adminsem;
 
 struct admin{
     int id; //primary key //the id is something that I decide // and I auto increment it....

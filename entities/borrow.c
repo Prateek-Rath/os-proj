@@ -8,12 +8,13 @@
 #include<stdlib.h>
 #include<stdbool.h>
 #include <sys/file.h>
-#ifndef ALL
-#define ALL
 #include"borrow.h"
 #include"user.h"
 #include"book.h"
-#endif
+#include<semaphore.h>
+
+sem_t borrowsem;
+
 
 struct borrowglobals borrowglob;
 // extern struct userglobals userglob;
@@ -40,13 +41,15 @@ void initborrow(){ //to be called only once
     }
     borrowglob.cur_borr_id = 0;
     borrowglob.count = 0;
-    flock(borrowglob.fd, LOCK_EX); printf("ex locked borrowfile\n");
+    flock(borrowglob.fd, LOCK_EX); 
+    // printf("ex locked borrowfile\n");
     write(borrowglob.fd, &borrowglob.cur_borr_id, sizeof(int));
     write(borrowglob.fd, &borrowglob.count, sizeof(int));
-    flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
+    flock(borrowglob.fd, LOCK_UN); 
+    // printf("unlocked borrowfile\n");
     close(borrowglob.fd);
     borrowglob.fd = -1;
-    printf("initborrow done\n");
+    // printf("initborrow done\n");
     
     sync();
 }
@@ -57,7 +60,9 @@ void startborrow(){
     borrowglob.fd = open(borrfile, O_RDWR, 0777);
     userglob.fd = open(usrfile, O_RDWR, 0777);
     bookglob.fd = open(bkfile, O_RDWR, 0777);
-    flock(borrowglob.fd, LOCK_SH); printf("share locked borrowfile\n");
+    sem_init(&borrowsem, 1, 1);
+    flock(borrowglob.fd, LOCK_SH); 
+    // printf("share locked borrowfile\n");
     int ret  = read(borrowglob.fd, &borrowglob.cur_borr_id, sizeof(int));
     if(ret == -1){
         printf("error in read\n");
@@ -71,9 +76,10 @@ void startborrow(){
         exit(0);
     }
     lseek(borrowglob.fd, 0, SEEK_SET);
-    printf("startborrow done\n");
+    // printf("startborrow done\n");
     sync();
-    flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
+    flock(borrowglob.fd, LOCK_UN); 
+    // printf("unlocked borrowfile\n");
     return ;
 
 }
@@ -82,12 +88,14 @@ void startborrow(){
 
 
 bool existsBorrow(struct borrow u1){
-    flock(bookglob.fd, LOCK_SH); printf("share locked bookfile\n");
+    flock(bookglob.fd, LOCK_SH); 
+    // printf("share locked bookfile\n");
     lseek(borrowglob.fd, 0, SEEK_SET);
     read(borrowglob.fd, &(borrowglob.cur_borr_id), sizeof(int));
     read(borrowglob.fd, &(borrowglob.count), sizeof(int));
     if(borrowglob.count == 0){
-        flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
+        flock(borrowglob.fd, LOCK_UN); 
+        // printf("unlocked borrowfile\n");
         return false;
     }
     else{
@@ -96,47 +104,54 @@ bool existsBorrow(struct borrow u1){
             read(borrowglob.fd, &temp, sizeof(temp));
             if(borrowequals(u1 , temp)){
                 sync();
-                flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
+                flock(borrowglob.fd, LOCK_UN); 
+                // printf("unlocked borrowfile\n");
                 return true;
             }
         }
-        flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
+        flock(borrowglob.fd, LOCK_UN); 
+        // printf("unlocked borrowfile\n");
         return false;
     }
-    flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
+    flock(borrowglob.fd, LOCK_UN); 
+    // printf("unlocked borrowfile\n");
 
 }
 
 void borrowBook(struct borrow u1, int *status){
-    printf("in borrow u1.title passed is %s\n", u1.title);
-    printf("in borrow u1.username passed is %s\n", u1.username);
+    // printf("in borrow u1.title passed is %s\n", u1.title);
+    // printf("in borrow u1.username passed is %s\n", u1.username);
     int bkoffset, usroffset, offset;
     
     struct book * bptr = findBook(u1.title, &bkoffset);
     struct user * uptr = finduser(u1.username, &usroffset);
 
     if(bptr == NULL){
-        printf("critical error, book doesn't exist!!\n");
+        // printf("critical error, book doesn't exist!!\n");
         *status =  BOOK_NOT_FOUND;
-        flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
+        flock(borrowglob.fd, LOCK_UN); 
+        // printf("unlocked borrowfile\n");
         return;
     }
     else if(uptr  == NULL){
-        printf("critical error, user doesn't exist!!\n");
+        // printf("critical error, user doesn't exist!!\n");
         *status =  USER_NOT_FOUND;
-        flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
+        flock(borrowglob.fd, LOCK_UN); 
+        // printf("unlocked borrowfile\n");
         return;
     }
-    printf("we found the book and the user\n");
+    // printf("we found the book and the user\n");
     struct book b1 = *bptr;
     //open the file 
     //ensure id and title are unique
     //insert at the end of the file
-    flock(borrowglob.fd, LOCK_EX); printf("ex locked borrowfile\n");
+    flock(borrowglob.fd, LOCK_EX); 
+    // printf("ex locked borrowfile\n");
     lseek(borrowglob.fd, 0, SEEK_SET);
     if(existsBorrow(u1)){
         *status = DUPLICATE_BORROW;//duplicate borrow
-        flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
+        flock(borrowglob.fd, LOCK_UN); 
+        // printf("unlocked borrowfile\n");
         return;
     }
     lseek(borrowglob.fd, 0, SEEK_SET);
@@ -153,12 +168,14 @@ void borrowBook(struct borrow u1, int *status){
 
     // printf("wrote %d\n", borrowglob.cur_borr_id);
     // printf("wrote count: %d\n", borrowglob.count);
-    flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
+    flock(borrowglob.fd, LOCK_UN); 
+    // printf("unlocked borrowfile\n");
     
 
     //we also need to go to the book file and update there
     //we have the offset
-    flock(bookglob.fd, LOCK_EX); printf("ex locked bookfile\n");
+    flock(bookglob.fd, LOCK_EX); 
+    // printf("ex locked bookfile\n");
     lseek(bookglob.fd, bkoffset, SEEK_SET);
     if(b1.copies_left > 0){
         b1.copies_left -=1;
@@ -169,8 +186,8 @@ void borrowBook(struct borrow u1, int *status){
         write(borrowglob.fd, &u1, sizeof(u1));
     }
     else{
-        printf("b1.copies is %d\n", b1.copies_left);
-        printf("b1.title is %s\n", b1.title);
+        // printf("b1.copies is %d\n", b1.copies_left);
+        // printf("b1.title is %s\n", b1.title);
         *status = NOT_ENOUGH_COPIES;
     }
     
@@ -187,13 +204,15 @@ void borrowBook(struct borrow u1, int *status){
 struct borrow * findborrow(char * title, char * username, int * offset){
     int count;
     *offset = 0;
-    flock(borrowglob.fd, LOCK_SH); printf("share locked borrowfile\n");
+    flock(borrowglob.fd, LOCK_SH); 
+    // printf("share locked borrowfile\n");
     lseek(borrowglob.fd, 0, SEEK_SET);
     read(borrowglob.fd, &borrowglob.cur_borr_id, sizeof(int));
     read(borrowglob.fd, &borrowglob.count, sizeof(int));
     //count is the number of records
     if(count == 0){
-        flock(bookglob.fd, LOCK_UN); printf("unlocked bookfile\n");
+        flock(bookglob.fd, LOCK_UN); 
+        // printf("unlocked bookfile\n");
         return NULL;
     }
     else{
@@ -211,22 +230,24 @@ struct borrow * findborrow(char * title, char * username, int * offset){
                 // printf(" title2: %s\n", title);
             }
         }
-        flock(bookglob.fd, LOCK_UN); printf("unlocked bookfile\n");    
+        flock(bookglob.fd, LOCK_UN); 
+        // printf("unlocked bookfile\n");    
         return NULL;
     }
     sync();
-    flock(bookglob.fd, LOCK_UN); printf("unlocked bookfile\n");
+    flock(bookglob.fd, LOCK_UN); 
+    // printf("unlocked bookfile\n");
     
 }
 
 
 void returnBook(char * title, char * username, int * status){
-    printf("in returnBook function\n");
+    // printf("in returnBook function\n");
     int bkoffset;
     struct book * bptr = findBook(title, &bkoffset);
     
     if(bptr == NULL){
-        printf("critical error, book doesn't exist!!\n");
+        // printf("critical error, book doesn't exist!!\n");
         *status =  BOOK_NOT_FOUND;
         return;
     }
@@ -236,11 +257,13 @@ void returnBook(char * title, char * username, int * status){
     struct borrow * u1 = findborrow(title, username, &offset);
     if(u1 == NULL){
         *status = BORROW_NOT_FOUND;
-        flock(bookglob.fd, LOCK_UN); printf("unlocked bookfile\n");
+        flock(bookglob.fd, LOCK_UN); 
+        // printf("unlocked bookfile\n");
         return;
     }
 
-    flock(borrowglob.fd, LOCK_EX); printf("ex locked borrowfile\n");
+    flock(borrowglob.fd, LOCK_EX); 
+    // printf("ex locked borrowfile\n");
     lseek(borrowglob.fd, 0, SEEK_SET);
     read(borrowglob.fd, &borrowglob.cur_borr_id, sizeof(int));
     read(borrowglob.fd, &borrowglob.count, sizeof(int));
@@ -257,17 +280,20 @@ void returnBook(char * title, char * username, int * status){
     write(borrowglob.fd, &borrowglob.count, sizeof(int));
     int endvalue = lseek(borrowglob.fd, 0, SEEK_END);
     ftruncate(borrowglob.fd, (endvalue - sizeof(struct borrow)));
-    flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
+    flock(borrowglob.fd, LOCK_UN); 
+    // printf("unlocked borrowfile\n");
 
     //we also need to go to the book file and update there
     //we have the offset
-    flock(bookglob.fd, LOCK_EX); printf("ex locked bookfile\n");
+    flock(bookglob.fd, LOCK_EX); 
+    // printf("ex locked bookfile\n");
     lseek(bookglob.fd, bkoffset, SEEK_SET);
     b1.copies_left +=1;
     write(bookglob.fd, &b1, sizeof(struct book));
     *status = 0; //success
     sync();
-    flock(bookglob.fd, LOCK_UN); printf("unlocked bookfile\n");
+    flock(bookglob.fd, LOCK_UN); 
+    // printf("unlocked bookfile\n");
     if(bptr != NULL) free(bptr);
     if(u1 != NULL) free(u1);
 }
@@ -286,7 +312,8 @@ void showborrow(struct borrow u1){
     
 void showAllBorrows(){
     int val;
-    flock(bookglob.fd, LOCK_SH); printf("share locked bookfile\n");
+    flock(bookglob.fd, LOCK_SH); 
+    // printf("share locked bookfile\n");
     lseek(borrowglob.fd, 0, SEEK_SET);
     read(borrowglob.fd, &val, sizeof(int));
     read(borrowglob.fd, &val, sizeof(int));
@@ -300,7 +327,8 @@ void showAllBorrows(){
         printf("temp.title is %s--\n", temp.title);
         showborrow(temp);
     }
-    flock(bookglob.fd, LOCK_UN); printf("unlocked bookfile\n");
+    flock(bookglob.fd, LOCK_UN); 
+    // printf("unlocked bookfile\n");
 }
 
 void endborrow(){
@@ -310,7 +338,7 @@ void endborrow(){
     bookglob.fd = -1;
     close(userglob.fd);
     userglob.fd = -1;
-    printf("endborrow done\n");
+    // printf("endborrow done\n");
 }
 
 
@@ -356,9 +384,9 @@ char * getBorrowList_user(char * username){
 
 
 char * getallBorrows(){
-    printf("trying to get a shared lock on borrow\n");
+    // printf("trying to get a shared lock on borrow\n");
     flock(borrowglob.fd, LOCK_SH);
-    printf("share locked borrow file\n");
+    // printf("share locked borrow file\n");
     lseek(borrowglob.fd, 0, SEEK_SET);
     int val;
     read(borrowglob.fd, &val, sizeof(int));
@@ -368,7 +396,7 @@ char * getallBorrows(){
     char * ans1 = malloc(150*sizeof(char));
     int n = 100*sizeof(struct borrow);//max 100 borrows
     ans = malloc(100*sizeof(struct borrow));
-    printf("there are %d\n", borrowglob.count);
+    // printf("there are %d\n", borrowglob.count);
     for(int i=0; i<borrowglob.count; i++){
         read(borrowglob.fd, buf, sizeof(struct borrow));
         sprintf(ans1,"title: %s username: %s phone: %s\n", buf->title, buf->username, buf->phone);
