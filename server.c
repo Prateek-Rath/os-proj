@@ -42,7 +42,7 @@ void * handleconn(void *comminfo){
         switch(optodo){
             // printf("opttodo is %d\n");
             case donothing:
-                printf("someone asked to do is nothing\n");
+                printf("someone asked to do nothing\n");
                 close(newfd);
                 pthread_exit(NULL);
                 break;
