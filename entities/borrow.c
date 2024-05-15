@@ -123,7 +123,7 @@ void borrowBook(struct borrow u1, int *status){
     }
     else if(uptr  == NULL){
         printf("critical error, user doesn't exist!!\n");
-        *status =  BOOK_NOT_FOUND;
+        *status =  USER_NOT_FOUND;
         flock(borrowglob.fd, LOCK_UN); printf("unlocked borrowfile\n");
         return;
     }
@@ -309,4 +309,20 @@ void endborrow(){
     close(userglob.fd);
     userglob.fd = -1;
     printf("endborrow done\n");
+}
+
+
+bool isBorrowed(struct book b1){
+    lseek(borrowglob.fd, 0, SEEK_SET);
+    flock(borrowglob.fd, LOCK_SH);
+    read(borrowglob.fd, &borrowglob.cur_borr_id, sizeof(int));
+    read(borrowglob.fd, &borrowglob.count, sizeof(int));
+    for(int i=0; i<borrowglob.count; i++){
+        struct borrow temp;
+        read(borrowglob.fd, &temp, sizeof(struct borrow));
+        if(strcmp(temp.title, b1.title) == 0){
+            return true;
+        }    
+    }
+    return false;
 }

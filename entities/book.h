@@ -15,6 +15,7 @@
 
 #define DUPLICATE_BOOK 2
 #define BOOK_NOT_FOUND 3
+#define NOT_YET_RETURNED 13
 
 #define bkfile "./files/book.dat"
 

@@ -287,7 +287,7 @@ int main(){
             switch (opt)
             {
             case 1:
-                printf("we want to list all the books");
+                printf("we want to list all the books\n");
                 struct message request;
                 struct reply response;
                 request.operation = listbooks;
@@ -299,16 +299,32 @@ int main(){
                 break;
 
             case 2:
-                printf("we want to find books by their title\n");
+                printf("we want to find book by title\n");
                 // struct message request;
                 // struct reply response;
+                printf("Enter book title: ");
+                char title[40];
                 request.operation = findbook;
+                scanf("%s", request.dataptr.findbook.title);
                 request.state.val = state.val;
+                
                 write(sockfd, &request, sizeof(struct message));
                 read(sockfd, &response, sizeof(struct reply));
                 printf("%s", response.text);
+                
                 printf("---------------------\n");
                 break;
+
+            case 3:
+                printf("we want to borrow a book\n");
+                printf("Enter book title: ");
+                scanf("%s", request.dataptr.borrowbook.borrow.title);
+                printf("Enter another/your own phone number: ");
+                scanf("%s", request.dataptr.borrowbook.borrow.phone);
+                strcpy(request.dataptr.borrowbook.borrow.username, state.who.user.username);
+                strcpy(request.dataptr.borrowbook.borrow.username, state.who.user.phone);
+                write(sockfd,&request, sizeof(struct message));
+                read(sockfd, &response, sizeof(struct reply));
 
             default:
                 break;
@@ -369,6 +385,45 @@ int main(){
                     printf("%s", response.text);
                     printf("---------------------\n");
                     break;
+                case 4:
+                    printf("we want to modify a book\n");
+                    // struct message request;
+                    // struct reply response;
+                    request.operation = modifybook;
+                    request.state.val = state.val;
+                    printf("Enter title: ");
+                    scanf("%s", request.dataptr.modifybook.oldtitle);
+                    printf("Enter new title: ");
+                    scanf("%s", request.dataptr.modifybook.book.title);
+                    printf("Enter new author: ");
+                    scanf("%s", request.dataptr.modifybook.book.author);
+                    printf("Enter new category: ");
+                    scanf("%s", request.dataptr.modifybook.book.category);
+                    printf("Enter new number of copies available: ");
+                    scanf("%d", &request.dataptr.modifybook.book.copies_left);
+                    write(sockfd, &request, sizeof(struct message));
+                    read(sockfd, &response, sizeof(struct reply));
+                    printf("%s", response.text);
+                    printf("---------------------\n");
+                    break;
+                case 5:
+                    printf("we want to delete a book\n");
+                    //we can only delete if it has not been borrowed
+                    request.operation = deletebook;
+                    request.state.val = state.val;
+                    printf("Enter title: ");
+                    scanf("%s", request.dataptr.deletebook.title);
+                    write(sockfd, &request, sizeof(struct message));
+                    read(sockfd, &response, sizeof(struct message));
+                    printf("%s", response.text);
+                    printf("---------------------\n");
+                    break;
+
+                case 6:
+                    printf("we want to list all users\n");
+                    request.operation = listusers;
+                    write(sockfd, &request, sizeof(struct message));
+                    read(sockfd, &response, sizeof(struct reply));
             }
         }
         else{

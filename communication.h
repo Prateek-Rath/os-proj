@@ -68,7 +68,9 @@ enum operation{
     registeruser,
     registeradmin,
     deleteadmin,
-    deleteuser
+    deleteuser,
+    listusers,
+    listadmins
 };
 
 union uni{
@@ -86,10 +88,11 @@ union uni{
     }addbook;
     
     struct deletebook{
-        struct book book;
+        char title[100];
     }deletebook;
 
     struct modifybook{
+        char oldtitle[40];
         struct book book;
     }modifybook;
 

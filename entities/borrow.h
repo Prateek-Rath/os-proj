@@ -11,10 +11,12 @@
 #include<stdlib.h>
 #include<stdbool.h>
 #include <sys/file.h>
+#include"book.h"
 
 #define DUPLICATE_BORROW 2
 #define BORROW_NOT_FOUND 3
 #define NOT_ENOUGH_COPIES 4
+#define BOOK_ALREADY_TAKEN 5
 
 
 #define borrfile "./files/borrow.dat"
@@ -55,5 +57,8 @@ void showborrow(struct borrow u1);
 void showAllBorrows();
 
 void endborrow();
+
+
+bool isBorrowed(struct book b1);//tells if someone has taken this book
 
 #endif

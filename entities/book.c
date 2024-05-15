@@ -9,6 +9,7 @@
 #include<stdbool.h>
 #include <sys/file.h>
 #include"book.h"
+#include"borrow.h"
 
 struct bookglobals bookglob;
 bool bookequals(struct book u1, struct book u2){
@@ -217,6 +218,8 @@ void updateBook(char *title, struct book newbook, int * status){
 
 
 void deleteBook(char * title, int * status){
+
+    
     int offset;
     printf("title is %s\n", title);
     struct book * u1 = findBook(title, &offset);
@@ -230,6 +233,12 @@ void deleteBook(char * title, int * status){
     // write(bookglob.fd, &delbook, sizeof(struct book));
     // *status = 0;
     // return;
+    if(isBorrowed(*u1)){
+            *status = NOT_YET_RETURNED;
+            free(u1);
+            return;
+    }
+
     flock(bookglob.fd, LOCK_SH); printf("share locked bookfile\n");
     lseek(bookglob.fd, 0, SEEK_SET);
     read(bookglob.fd, &bookglob.cur_bk_id, sizeof(int));

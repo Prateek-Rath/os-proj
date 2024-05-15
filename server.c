@@ -87,17 +87,116 @@ void * handleconn(void *comminfo){
                 write(newfd, &reply, sizeof(struct reply));
             break;  
             case deletebook:
-            break;
+                
+                deleteBook(buf.dataptr.deletebook.title, &status);
+                if(status == 0){
+                    sprintf(reply.text , "deleted book successfully\n");
+                    
+                }
+                else if(status == NOT_YET_RETURNED){
+                    sprintf(reply.text , "could not delete as someone has borrowed this book\n");
+                }
+                else {
+                    printf("some other error\n");
+                    exit(0);
+                }
+                write(newfd, &reply, sizeof(struct reply));
+                break;
+
             case modifybook:
-            break;
+                
+                updateBook(buf.dataptr.modifybook.oldtitle, buf.dataptr.modifybook.book, &status);
+                if(status == DUPLICATE_BOOK){
+                    strcpy(reply.text, "that already exists!!");
+                    structstatecpy(&reply.newstate, &buf.state);
+                }
+                else if(status == 0){
+                    strcpy(reply.text, "successfully created book!!");
+                    structstatecpy(&reply.newstate, &buf.state);
+                }
+                else{
+                    printf("some unknown error");
+                    printf("status is %d\n", status);
+                }
+                write(newfd, &reply, sizeof(struct reply));
+                break;
+
             case borrowbook:
-            break;
+                
+                borrowBook(buf.dataptr.borrowbook.borrow, &status);
+                if(status == 0){
+                    char * str = malloc(50);
+                    sprintf(str, "successful borrow\n");
+                    strcpy(reply.text, str);
+                    structstatecpy(&reply.newstate, &buf.state);
+                    
+                }
+                else if(status == BOOK_NOT_FOUND){
+                    char * str = malloc(50);
+                    sprintf(str, "no such book!!\n");
+                    strcpy(reply.text, str);
+                    structstatecpy(&reply.newstate, &buf.state);
+                    
+                }
+                else if(status == NOT_ENOUGH_COPIES){
+                    char * str = malloc(50);
+                    sprintf(str, "no copies of that book are available!!\n");
+                    strcpy(reply.text, str);
+                    structstatecpy(&reply.newstate, &buf.state);
+                    
+                }
+                else if(status == DUPLICATE_BORROW){
+                    char * str = malloc(50);
+                    sprintf(str, "you already have that book!!\n");
+                    strcpy(reply.text, str);
+                    structstatecpy(&reply.newstate, &buf.state);
+                    
+                }
+                else{
+                    printf("some other errror\n");
+                    exit(0);
+                }
+                write(newfd, &reply, sizeof(struct reply));
+                break;
             case returnbook:
+                
+                returnBook(buf.dataptr.returnbook.borrow.title, buf.dataptr.returnbook.borrow.username, &status);
+                if(status == 0){
+                    char * str = malloc(50);
+                    sprintf(str, "successful return\n");
+                    strcpy(reply.text, str);
+                    structstatecpy(&reply.newstate, &buf.state);
+                    write(newfd, &reply, sizeof(struct reply));
+                }
+                else if(status == BOOK_NOT_FOUND){
+                    char * str = malloc(50);
+                    sprintf(str, "no such book!!\n");
+                    strcpy(reply.text, str);
+                    structstatecpy(&reply.newstate, &buf.state);
+                    write(newfd, &reply, sizeof(struct reply));
+                }
+                else if(status == USER_NOT_FOUND){
+                    char * str = malloc(50);
+                    sprintf(str, "no such user!!\n");
+                    strcpy(reply.text, str);
+                    structstatecpy(&reply.newstate, &buf.state);
+                    write(newfd, &reply, sizeof(struct reply));
+                }
+                else if(status == NOT_ENOUGH_COPIES){
+                    char * str = malloc(50);
+                    sprintf(str, "you don't have copies of that book\n");
+                    strcpy(reply.text, str);
+                    structstatecpy(&reply.newstate, &buf.state);
+                    write(newfd, &reply, sizeof(struct reply));
+                }
+                break;
+            case listusers:
+                
                 break;
 
             case loginuser:
                 printf("user is trying to login!\n");
-                // int status;
+                // 
                 printf("started validation\n");
                 validateUser(buf.dataptr.loginuser.username, buf.dataptr.loginuser.password, &status);
                 printf("validation done\n");
