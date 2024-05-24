@@ -53,7 +53,7 @@ void startbook(){
     //open required files
     bookglob.fd = open(bkfile, O_RDWR, 0777);
     sem_init(&booksem, 1, 1);
-    flock(bookglob.fd, LOCK_SH); 
+    flock(bookglob.fd, LOCK_EX); 
     // printf("share locked bookfile\n");
     int ret = read(bookglob.fd, &bookglob.cur_bk_id, sizeof(int));
     read(bookglob.fd, &bookglob.count, sizeof(int));
@@ -77,7 +77,7 @@ void startbook(){
 
 
 bool existsBook(struct book u1){
-    flock(bookglob.fd, LOCK_SH); 
+    flock(bookglob.fd, LOCK_EX); 
     // printf("share locked bookfile\n");
     lseek(bookglob.fd, 0, SEEK_SET);
     read(bookglob.fd, &(bookglob.cur_bk_id), sizeof(int));
@@ -147,7 +147,7 @@ void createBook(struct book u1, int *status){
 
 struct book * findBook(char * title, int * offset){
     // printf("find book called\n---------------");
-    flock(bookglob.fd, LOCK_SH); 
+    flock(bookglob.fd, LOCK_EX); 
     // printf("share locked bookfile\n");
     *offset = 0;
     lseek(bookglob.fd, 0, SEEK_SET);
@@ -309,7 +309,7 @@ void showbook(struct book u1){
     
 void showAllBooks(){
     int val;
-    flock(bookglob.fd, LOCK_SH); 
+    flock(bookglob.fd, LOCK_EX); 
     // printf("share locked bookfile\n");
     lseek(bookglob.fd, 0, SEEK_SET);
     read(bookglob.fd, &val, sizeof(int));
@@ -335,7 +335,7 @@ void endbook(){
 
 char * getallBooks(){
     // printf("trying to get a shared lock on books\n");
-    flock(bookglob.fd, LOCK_SH);
+    flock(bookglob.fd, LOCK_EX);
     // printf("share locked books file\n");
     lseek(bookglob.fd, 0, SEEK_SET);
     int val;
@@ -346,6 +346,8 @@ char * getallBooks(){
     char * ans1 = malloc(150*sizeof(char));
     int n = 100*sizeof(struct book);//max 100 books
     ans = malloc(100*sizeof(struct book));
+    strcpy(ans, "");
+    strcpy(ans1, "");
     // printf("there are %d\n", bookglob.count);
     for(int i=0; i<bookglob.count; i++){
         read(bookglob.fd, buf, sizeof(struct book));

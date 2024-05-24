@@ -271,8 +271,8 @@ void * handleconn(void *comminfo){
                 else{
                     printf("unexpected error\n");
                 }
-                // printf("going to write the reply\n");
-                // printf("replytext is %s\n", reply.text);
+                 printf("going to write the reply\n");
+                 printf("replytext is %s\n", reply.text);
                 write(newfd, &reply, sizeof(struct reply));
                 printf("reply sent\n");
                 sem_post(&usersem);
@@ -454,27 +454,29 @@ int main(){
     int newfd;
     
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    //server.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server.sin_addr.s_addr = inet_addr("192.168.1.207");
+
     server.sin_port = htons(PORT);
 
     int ret = bind(sockfd, (struct sockaddr*)&server, sizeof(server));
     
     if(ret < 0){
         printf("bind failed\n");
-        printf("error: %s\n", strerror(errno) );
+        printf("error: %s\n", strerror(errno));
         exit(0);
     }
 
     listen(sockfd, 1);
     printf("listening on port %d\n", PORT);
     int addrlen = sizeof(clientaddr);
-    // inituser();
+    //  inituser();
     startuser();
-    // initadmin();
+    //  initadmin();
     startadmin();
-    // initbook();
+    //  initbook();
     startbook();
-    // initborrow();
+    //  initborrow();
     startborrow();
     while(1){
         int newfd = accept(sockfd, (struct sockaddr*)&clientaddr, (socklen_t*)&addrlen);

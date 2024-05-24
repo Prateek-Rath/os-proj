@@ -62,7 +62,7 @@ void startadmin(){
     adminglob.fd = open(admfile, O_RDWR, 0777);
     sem_init(&adminsem, 1, 1);
     int ret = read(adminglob.fd, &adminglob.cur_adm_id, sizeof(int));
-    flock(adminglob.fd, LOCK_SH);
+    flock(adminglob.fd, LOCK_EX);
     read(adminglob.fd, &adminglob.count, sizeof(int));
     
     // printf("cur_admin_id is %d and count is %d\n", adminglob.cur_adm_id, adminglob.count);
@@ -82,7 +82,7 @@ void startadmin(){
 
 
 bool existsAdmin(struct admin u1){
-    flock(adminglob.fd, LOCK_SH);
+    flock(adminglob.fd, LOCK_EX);
     lseek(adminglob.fd, 0, SEEK_SET);
     read(adminglob.fd, &(adminglob.cur_adm_id), sizeof(int));
     read(adminglob.fd, &(adminglob.count), sizeof(int));
@@ -294,7 +294,7 @@ void showadmin(struct admin u1){
     
 void showAllAdmins(){
     int val;
-    flock(adminglob.fd, LOCK_SH);
+    flock(adminglob.fd, LOCK_EX);
     lseek(adminglob.fd, 0, SEEK_SET);
     read(adminglob.fd, &val, sizeof(int));
     read(adminglob.fd, &val, sizeof(int));

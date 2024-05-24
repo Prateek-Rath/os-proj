@@ -114,7 +114,7 @@ int main(){
     int opt;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in servaddr, client;
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    servaddr.sin_addr.s_addr = inet_addr("192.168.1.207");
     // servaddr.sin_addr.s_addr = INADDR_ANY;
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(PORT);

@@ -61,7 +61,7 @@ void startborrow(){
     userglob.fd = open(usrfile, O_RDWR, 0777);
     bookglob.fd = open(bkfile, O_RDWR, 0777);
     sem_init(&borrowsem, 1, 1);
-    flock(borrowglob.fd, LOCK_SH); 
+    flock(borrowglob.fd, LOCK_EX); 
     // printf("share locked borrowfile\n");
     int ret  = read(borrowglob.fd, &borrowglob.cur_borr_id, sizeof(int));
     if(ret == -1){
@@ -88,7 +88,7 @@ void startborrow(){
 
 
 bool existsBorrow(struct borrow u1){
-    flock(bookglob.fd, LOCK_SH); 
+    flock(bookglob.fd, LOCK_EX); 
     // printf("share locked bookfile\n");
     lseek(borrowglob.fd, 0, SEEK_SET);
     read(borrowglob.fd, &(borrowglob.cur_borr_id), sizeof(int));
@@ -127,14 +127,14 @@ void borrowBook(struct borrow u1, int *status){
     struct user * uptr = finduser(u1.username, &usroffset);
 
     if(bptr == NULL){
-        // printf("critical error, book doesn't exist!!\n");
+        printf("critical error, book doesn't exist!!\n");
         *status =  BOOK_NOT_FOUND;
         flock(borrowglob.fd, LOCK_UN); 
         // printf("unlocked borrowfile\n");
         return;
     }
     else if(uptr  == NULL){
-        // printf("critical error, user doesn't exist!!\n");
+        printf("critical error, user doesn't exist!!\n");
         *status =  USER_NOT_FOUND;
         flock(borrowglob.fd, LOCK_UN); 
         // printf("unlocked borrowfile\n");
@@ -204,7 +204,7 @@ void borrowBook(struct borrow u1, int *status){
 struct borrow * findborrow(char * title, char * username, int * offset){
     int count;
     *offset = 0;
-    flock(borrowglob.fd, LOCK_SH); 
+    flock(borrowglob.fd, LOCK_EX); 
     // printf("share locked borrowfile\n");
     lseek(borrowglob.fd, 0, SEEK_SET);
     read(borrowglob.fd, &borrowglob.cur_borr_id, sizeof(int));
@@ -312,7 +312,7 @@ void showborrow(struct borrow u1){
     
 void showAllBorrows(){
     int val;
-    flock(bookglob.fd, LOCK_SH); 
+    flock(bookglob.fd, LOCK_EX); 
     // printf("share locked bookfile\n");
     lseek(borrowglob.fd, 0, SEEK_SET);
     read(borrowglob.fd, &val, sizeof(int));
@@ -344,7 +344,7 @@ void endborrow(){
 
 bool isBorrowed(struct book b1){
     lseek(borrowglob.fd, 0, SEEK_SET);
-    flock(borrowglob.fd, LOCK_SH);
+    flock(borrowglob.fd, LOCK_EX);
     read(borrowglob.fd, &borrowglob.cur_borr_id, sizeof(int));
     read(borrowglob.fd, &borrowglob.count, sizeof(int));
     for(int i=0; i<borrowglob.count; i++){
@@ -360,7 +360,7 @@ bool isBorrowed(struct book b1){
 
 char * getBorrowList_user(char * username){
     //get books borrowed by a user
-    flock(borrowglob.fd, LOCK_SH);
+    flock(borrowglob.fd, LOCK_EX);
     lseek(borrowglob.fd, 0, SEEK_SET);
     read(borrowglob.fd, &borrowglob.cur_borr_id, sizeof(int));
     read(borrowglob.fd, &borrowglob.count, sizeof(int));
@@ -371,7 +371,7 @@ char * getBorrowList_user(char * username){
     strcpy(ans, "");
     for(int i=0; i<borrowglob.count; i++){
         read(borrowglob.fd, &borrow1, sizeof(struct borrow));
-        if(strcpy(borrow1.username, username)){
+        if(strcmp(borrow1.username, username) == 0){
             int offset;
             struct book * b1 = findBook(borrow1.title, &offset);
             sprintf(ans1, "title: %s, author: %s catgory: %s\n", b1->title, b1->author, b1->category);
@@ -385,7 +385,7 @@ char * getBorrowList_user(char * username){
 
 char * getallBorrows(){
     // printf("trying to get a shared lock on borrow\n");
-    flock(borrowglob.fd, LOCK_SH);
+    flock(borrowglob.fd, LOCK_EX);
     // printf("share locked borrow file\n");
     lseek(borrowglob.fd, 0, SEEK_SET);
     int val;
@@ -396,7 +396,9 @@ char * getallBorrows(){
     char * ans1 = malloc(150*sizeof(char));
     int n = 100*sizeof(struct borrow);//max 100 borrows
     ans = malloc(100*sizeof(struct borrow));
-    // printf("there are %d\n", borrowglob.count);
+    strcpy(ans, "");
+    strcpy(ans1, "");
+    printf("there are %d borrows\n", borrowglob.count);
     for(int i=0; i<borrowglob.count; i++){
         read(borrowglob.fd, buf, sizeof(struct borrow));
         sprintf(ans1,"title: %s username: %s phone: %s\n", buf->title, buf->username, buf->phone);

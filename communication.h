@@ -12,7 +12,7 @@
 
 #include<pthread.h>
 
-#define PORT 5545
+#define PORT 5544
 
 
 enum states

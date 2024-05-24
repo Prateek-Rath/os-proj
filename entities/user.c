@@ -86,7 +86,7 @@ void startuser(){
     //open required files
     userglob.fd = open(usrfile, O_RDWR, 0777);
     sem_init(&usersem, 1, 1);
-    flock(userglob.fd, LOCK_SH);
+    flock(userglob.fd, LOCK_EX);
     lseek(userglob.fd, 0, SEEK_SET);
     int ret = read(userglob.fd, &userglob.cur_usr_id, sizeof(int));
     read(userglob.fd, &userglob.count, sizeof(int));
@@ -111,7 +111,7 @@ void startuser(){
 
 
 bool existsUser(struct user u1){
-    flock(userglob.fd, LOCK_SH);
+    flock(userglob.fd, LOCK_EX);
     lseek(userglob.fd, 0, SEEK_SET);
     read(userglob.fd, &(userglob.cur_usr_id), sizeof(int));
     read(userglob.fd, &(userglob.count), sizeof(int));
@@ -212,8 +212,8 @@ struct user * finduser(char * username, int * offset){
             }
             else{
                 *offset = lseek(userglob.fd, 0, SEEK_CUR);
-                // printf("did not match with: \n");
-                // showuser(*temp);
+                printf("did not match with: \n");
+                showuser(*temp);
             }
         }
         sync();
@@ -230,7 +230,7 @@ struct user * finduser(char * username, int * offset){
 char * listUsers(){
     char * ans;
     ans = malloc(100 * sizeof(struct user));
-    flock(userglob.fd, LOCK_SH);
+    flock(userglob.fd, LOCK_EX);
     lseek(userglob.fd, 0, SEEK_SET);
     read(userglob.fd, &userglob.cur_usr_id, sizeof(int));
     read(userglob.fd, &userglob.count, sizeof(int));
@@ -364,7 +364,7 @@ void showuser(struct user u1){
     
 void showAllUsers(){
     int val;
-    flock(userglob.fd, LOCK_SH);
+    flock(userglob.fd, LOCK_EX);
     lseek(userglob.fd, 0, SEEK_SET);
     read(userglob.fd, &val, sizeof(int));
     read(userglob.fd, &val, sizeof(int));
